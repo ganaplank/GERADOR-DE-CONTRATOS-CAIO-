@@ -137,6 +137,7 @@ export default function App() {
 
   const [condominiosList, setCondominiosList] = useState<any[]>([]);
   const [isLoadingDefault, setIsLoadingDefault] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedCondominioId, setSelectedCondominioId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -149,12 +150,24 @@ export default function App() {
 
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const arrayBuffer = evt.target?.result as ArrayBuffer;
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws) as any[];
-      setCondominiosList(prev => [...prev, ...data]);
+      try {
+        const arrayBuffer = evt.target?.result as ArrayBuffer;
+        const wb = XLSX.read(arrayBuffer, { type: 'array' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws) as any[];
+        
+        if (data && data.length > 0) {
+          setCondominiosList(prev => [...prev, ...data]);
+          console.log('Importação manual concluída:', data.length, 'novos itens adicionados.');
+          alert(`Sucesso! ${data.length} condomínios foram adicionados à lista.`);
+        } else {
+          alert('O arquivo selecionado parece estar vazio ou não contém dados válidos.');
+        }
+      } catch (err) {
+        console.error('Erro na importação manual:', err);
+        alert('Erro ao ler o arquivo. Certifique-se de que é um arquivo Excel (.xlsx) válido.');
+      }
     };
     reader.readAsArrayBuffer(file);
   };
@@ -206,28 +219,48 @@ export default function App() {
     return idStr.includes(searchStr) || nomeStr.includes(searchStr);
   });
 
-  useEffect(() => {
-    // Try to load default condominios.xlsx from public folder
+  const loadDefaultCondominios = async () => {
     setIsLoadingDefault(true);
-    fetch('condominios.xlsx')
-      .then(res => {
-        if (!res.ok) throw new Error('File not found');
-        return res.arrayBuffer();
-      })
-      .then(arrayBuffer => {
-        const wb = XLSX.read(arrayBuffer, { type: 'array' });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws);
+    setFetchError(null);
+    try {
+      // Use BASE_URL which is the most robust way in Vite
+      const baseUrl = import.meta.env.BASE_URL || '/';
+      const path = baseUrl.endsWith('/') ? `${baseUrl}condominios.xlsx` : `${baseUrl}/condominios.xlsx`;
+      
+      console.log('Tentando carregar base de condomínios padrão de:', path);
+      
+      const res = await fetch(path);
+      if (!res.ok) {
+        throw new Error(`Arquivo não encontrado (Status: ${res.status}). Verifique se 'public/condominios.xlsx' existe no seu repositório e se o build foi concluído.`);
+      }
+      
+      const arrayBuffer = await res.arrayBuffer();
+      const wb = XLSX.read(arrayBuffer, { type: 'array' });
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      const data = XLSX.utils.sheet_to_json(ws);
+      
+      if (data && data.length > 0) {
         setCondominiosList(data);
-      })
-      .catch(err => {
-        console.log('No default condominios.xlsx found or error parsing it.', err);
-      })
-      .finally(() => {
-        setIsLoadingDefault(false);
-      });
+        console.log('Base de condomínios carregada com sucesso:', data.length, 'itens');
+      } else {
+        throw new Error('O arquivo condominios.xlsx foi encontrado, mas parece estar vazio ou com formato inválido.');
+      }
+    } catch (err) {
+      console.error('Erro detalhado ao carregar base padrão:', err);
+      setFetchError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsLoadingDefault(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDefaultCondominios();
   }, []);
+
+  useEffect(() => {
+    console.log('Lista de condomínios atualizada. Total:', condominiosList.length);
+  }, [condominiosList]);
 
   useEffect(() => {
     const paragrafoMulta =
@@ -275,7 +308,7 @@ export default function App() {
             <FileText className="w-8 h-8 text-emerald-400" />
             <h1 className="text-2xl font-semibold tracking-tight">Gerador de Contratos</h1>
           </div>
-          <p className="text-slate-400">Sell Administradora de Condomínios</p>
+          <p className="text-slate-400">APP PARA CAIO CONTRATOS</p>
         </div>
 
         <div className="p-8 space-y-8">
@@ -308,7 +341,18 @@ export default function App() {
             {isLoadingDefault ? (
               <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                Carregando base de condomínios...
+                Carregando base de condomínios padrão...
+              </div>
+            ) : fetchError ? (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <p className="font-semibold mb-1">Erro ao carregar base automática:</p>
+                <p className="mb-2">{fetchError}</p>
+                <button 
+                  onClick={loadDefaultCondominios}
+                  className="text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors font-medium"
+                >
+                  Tentar Novamente
+                </button>
               </div>
             ) : condominiosList.length > 0 ? (
               <div className="mb-4 relative" ref={dropdownRef}>
