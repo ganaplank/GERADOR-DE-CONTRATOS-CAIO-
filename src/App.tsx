@@ -223,9 +223,8 @@ export default function App() {
     setIsLoadingDefault(true);
     setFetchError(null);
     try {
-      // Use BASE_URL which is the most robust way in Vite
-      const baseUrl = import.meta.env.BASE_URL || '/';
-      const path = baseUrl.endsWith('/') ? `${baseUrl}condominios.xlsx` : `${baseUrl}/condominios.xlsx`;
+      // Use a safer way to get the base path
+      const path = 'condominios.xlsx';
       
       console.log('Tentando carregar base de condomínios padrão de:', path);
       
@@ -308,7 +307,7 @@ export default function App() {
             <FileText className="w-8 h-8 text-emerald-400" />
             <h1 className="text-2xl font-semibold tracking-tight">Gerador de Contratos</h1>
           </div>
-          <p className="text-slate-400">APP PARA CAIO CONTRATOS</p>
+          <p className="text-slate-400">Sell Administradora de Condomínios</p>
         </div>
 
         <div className="p-8 space-y-8">
