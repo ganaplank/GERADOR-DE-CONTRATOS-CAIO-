@@ -136,6 +136,7 @@ export default function App() {
   };
 
   const [condominiosList, setCondominiosList] = useState<any[]>([]);
+  const [isLoadingDefault, setIsLoadingDefault] = useState(true);
   const [selectedCondominioId, setSelectedCondominioId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -207,7 +208,8 @@ export default function App() {
 
   useEffect(() => {
     // Try to load default condominios.xlsx from public folder
-    fetch('/condominios.xlsx')
+    setIsLoadingDefault(true);
+    fetch('condominios.xlsx')
       .then(res => {
         if (!res.ok) throw new Error('File not found');
         return res.arrayBuffer();
@@ -221,6 +223,9 @@ export default function App() {
       })
       .catch(err => {
         console.log('No default condominios.xlsx found or error parsing it.', err);
+      })
+      .finally(() => {
+        setIsLoadingDefault(false);
       });
   }, []);
 
@@ -300,7 +305,12 @@ export default function App() {
               </div>
             </div>
 
-            {condominiosList.length > 0 && (
+            {isLoadingDefault ? (
+              <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                Carregando base de condomínios...
+              </div>
+            ) : condominiosList.length > 0 ? (
               <div className="mb-4 relative" ref={dropdownRef}>
                 <label className="text-sm font-medium text-slate-700 block mb-1">Pesquisar Condomínio da Planilha</label>
                 <div className="relative">
@@ -352,6 +362,10 @@ export default function App() {
                     )}
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                Nenhuma base de condomínios carregada. Importe uma planilha para começar.
               </div>
             )}
 
