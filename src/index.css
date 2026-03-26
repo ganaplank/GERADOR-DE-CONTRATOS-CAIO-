@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+@layer base {
+  body {
+    @apply transition-colors duration-300;
+  }
+}
+
+.markdown-body {
+  @apply text-slate-700 dark:text-slate-300;
+}

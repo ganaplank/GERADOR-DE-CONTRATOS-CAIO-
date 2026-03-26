@@ -1,10 +1,72 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Download, Building2, User, Calendar, FileDown, Upload, Search, ChevronDown, GripVertical, X, Plus } from 'lucide-react';
+import { 
+  FileText, Download, Building2, User, Calendar, FileDown, 
+  Upload, Search, ChevronDown, GripVertical, X, Plus,
+  Moon, Sun, Save, FileUp, Eye, CheckCircle2, AlertCircle
+} from 'lucide-react';
 import { generatePDF } from './utils/pdfGenerator';
 import { generateWord } from './utils/wordGenerator';
 import * as XLSX from 'xlsx';
+import { motion, AnimatePresence } from 'motion/react';
+import Fuse from 'fuse.js';
+
+const OPTIONAL_CLAUSES = [
+  { id: 'seguro', title: 'Seguro Obrigatório', text: 'O CONDOMÍNIO obriga-se a manter seguro contra incêndio ou qualquer outro evento que possa causar destruição total ou parcial da edificação, abrangendo todas as unidades autônomas e partes comuns.' },
+  { id: 'inadimplencia', title: 'Combate à Inadimplência', text: 'A ADMINISTRADORA enviará mensalmente relatório de inadimplência atualizado e promoverá a cobrança administrativa dos débitos vencidos há mais de 30 dias.' },
+  { id: 'vistorias', title: 'Vistorias Periódicas', text: 'A ADMINISTRADORA realizará vistorias trimestrais nas áreas comuns do condomínio, emitindo relatório técnico sobre o estado de conservação das instalações.' },
+  { id: 'assembleia_extra', title: 'Assembleias Extras Ilimitadas', text: 'Fica estipulado que a ADMINISTRADORA participará de todas as assembleias extraordinárias convocadas, sem custo adicional por evento.' }
+];
+
+const validateCPF = (cpf: string) => {
+  const cleanCPF = cpf.replace(/\D/g, '');
+  if (cleanCPF.length !== 11) return false;
+  if (/^(\d)\1+$/.test(cleanCPF)) return false;
+  let sum = 0;
+  for (let i = 1; i <= 9; i++) sum += parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
+  let rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  if (rest !== parseInt(cleanCPF.substring(9, 10))) return false;
+  sum = 0;
+  for (let i = 1; i <= 10; i++) sum += parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  if (rest !== parseInt(cleanCPF.substring(10, 11))) return false;
+  return true;
+};
+
+const validateCNPJ = (cnpj: string) => {
+  const cleanCNPJ = cnpj.replace(/\D/g, '');
+  if (cleanCNPJ.length !== 14) return false;
+  if (/^(\d)\1+$/.test(cleanCNPJ)) return false;
+  let size = cleanCNPJ.length - 2;
+  let numbers = cleanCNPJ.substring(0, size);
+  const digits = cleanCNPJ.substring(size);
+  let sum = 0;
+  let pos = size - 7;
+  for (let i = size; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(size - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (result !== parseInt(digits.charAt(0))) return false;
+  size = size + 1;
+  numbers = cleanCNPJ.substring(0, size);
+  sum = 0;
+  pos = size - 7;
+  for (let i = size; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(size - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (result !== parseInt(digits.charAt(1))) return false;
+  return true;
+};
 
 export default function App() {
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+  const [showPreview, setShowPreview] = useState(false);
+  const [selectedOptionalClauses, setSelectedOptionalClauses] = useState<string[]>([]);
+  
   const [formData, setFormData] = useState({
     nomeCondominio: '',
     cnpjCondominio: '',
@@ -34,9 +96,23 @@ export default function App() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.nomeCondominio) newErrors.nomeCondominio = 'Nome do condomínio é obrigatório';
-    if (!formData.cnpjCondominio) newErrors.cnpjCondominio = 'CNPJ é obrigatório';
+    
+    if (!formData.cnpjCondominio) {
+      newErrors.cnpjCondominio = 'CNPJ é obrigatório';
+    } else if (!validateCNPJ(formData.cnpjCondominio)) {
+      newErrors.cnpjCondominio = 'CNPJ inválido';
+    }
+
     if (!formData.nomeSindico) newErrors.nomeSindico = 'Nome do síndico é obrigatório';
-    if (!formData.cpfSindico) newErrors.cpfSindico = 'CPF é obrigatório';
+    
+    if (!formData.cpfSindico) {
+      newErrors.cpfSindico = 'CPF é obrigatório';
+    } else if (formData.cpfSindico.replace(/\D/g, '').length <= 11 && !validateCPF(formData.cpfSindico)) {
+      newErrors.cpfSindico = 'CPF inválido';
+    } else if (formData.cpfSindico.replace(/\D/g, '').length > 11 && !validateCNPJ(formData.cpfSindico)) {
+      newErrors.cpfSindico = 'CNPJ do síndico inválido';
+    }
+
     if (!formData.emailSindico || !/\S+@\S+\.\S+/.test(formData.emailSindico)) newErrors.emailSindico = 'E-mail inválido';
     if (!formData.dataBase) newErrors.dataBase = 'Data-base é obrigatória';
     if (!formData.valorPrestacao) newErrors.valorPrestacao = 'Valor da prestação é obrigatório';
@@ -142,7 +218,73 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const draftInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Auto-save logic
+  useEffect(() => {
+    const savedData = localStorage.getItem('contractDraft');
+    if (savedData) {
+      try {
+        const { formData: savedForm, table41Data: savedTable, selectedOptionalClauses: savedClauses } = JSON.parse(savedData);
+        if (savedForm) setFormData(prev => ({ ...prev, ...savedForm }));
+        if (savedTable) setTable41Data(savedTable);
+        if (savedClauses) setSelectedOptionalClauses(savedClauses);
+      } catch (e) {
+        console.error('Error loading draft from localStorage', e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const dataToSave = JSON.stringify({ formData, table41Data, selectedOptionalClauses });
+    localStorage.setItem('contractDraft', dataToSave);
+  }, [formData, table41Data, selectedOptionalClauses]);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', String(darkMode));
+  }, [darkMode]);
+
+  const handleExportDraft = () => {
+    const data = JSON.stringify({ formData, table41Data, selectedOptionalClauses }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Rascunho_Contrato_${formData.nomeCondominio || 'Sem_Nome'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportDraft = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const content = evt.target?.result as string;
+        const { formData: importedForm, table41Data: importedTable, selectedOptionalClauses: importedClauses } = JSON.parse(content);
+        if (importedForm) setFormData(importedForm);
+        if (importedTable) setTable41Data(importedTable);
+        if (importedClauses) setSelectedOptionalClauses(importedClauses);
+        alert('Rascunho importado com sucesso!');
+      } catch (e) {
+        alert('Erro ao importar rascunho. Arquivo inválido.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const toggleOptionalClause = (id: string) => {
+    setSelectedOptionalClauses(prev => 
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    );
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -212,12 +354,32 @@ export default function App() {
     return idA.localeCompare(idB);
   });
 
-  const filteredCondominios = sortedCondominios.filter(c => {
-    const searchStr = searchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const idStr = c.ID ? String(c.ID).padStart(4, '0') : '';
-    const nomeStr = c.Nome ? String(c.Nome).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
-    return idStr.includes(searchStr) || nomeStr.includes(searchStr);
-  });
+  const filteredCondominios = React.useMemo(() => {
+    if (!searchTerm) return sortedCondominios;
+
+    const fuse = new Fuse(sortedCondominios, {
+      keys: [
+        { name: 'ID', weight: 0.3 },
+        { name: 'Nome', weight: 0.7 }
+      ],
+      threshold: 0.3,
+      includeScore: true,
+      ignoreLocation: true,
+      minMatchCharLength: 1,
+      shouldSort: true
+    });
+
+    // Also allow exact ID matching if it's a number
+    const exactIdMatch = sortedCondominios.find(c => String(c.ID).padStart(4, '0') === searchTerm.padStart(4, '0'));
+    
+    const results = fuse.search(searchTerm).map(r => r.item);
+    
+    if (exactIdMatch && !results.find(r => r.ID === exactIdMatch.ID)) {
+      return [exactIdMatch, ...results];
+    }
+    
+    return results;
+  }, [searchTerm, sortedCondominios]);
 
   const loadDefaultCondominios = async () => {
     setIsLoadingDefault(true);
@@ -300,24 +462,66 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="bg-slate-900 px-8 py-6 text-white">
-          <div className="flex items-center gap-3 mb-2">
-            <FileText className="w-8 h-8 text-emerald-400" />
-            <h1 className="text-2xl font-semibold tracking-tight">Gerador de Contratos</h1>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Form Column */}
+        <div className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-all ${showPreview ? '' : 'lg:col-span-2 max-w-3xl mx-auto'}`}>
+          <div className="bg-slate-900 dark:bg-black px-8 py-6 text-white flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FileText className="w-8 h-8 text-emerald-400" />
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">Gerador de Contratos</h1>
+                <p className="text-slate-400 text-sm">Sell Administradora de Condomínios</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-300"
+                title={darkMode ? 'Modo Claro' : 'Modo Escuro'}
+              >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              <div className="h-6 w-px bg-slate-700 mx-1" />
+              <button
+                onClick={handleExportDraft}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-300"
+                title="Exportar Rascunho"
+              >
+                <Save className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => draftInputRef.current?.click()}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-300"
+                title="Importar Rascunho"
+              >
+                <FileUp className="w-5 h-5" />
+              </button>
+              <input
+                type="file"
+                accept=".json"
+                className="hidden"
+                ref={draftInputRef}
+                onChange={handleImportDraft}
+              />
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                className={`p-2 rounded-lg transition-colors ${showPreview ? 'bg-emerald-500 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
+                title="Visualização em Tempo Real"
+              >
+                <Eye className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <p className="text-slate-400">Sell Administradora de Condomínios</p>
-        </div>
 
-        <div className="p-8 space-y-8">
-          {/* Dados do Condomínio */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-slate-900 flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-slate-500" />
-                1. Dados do Condomínio
-              </h2>
+          <div className="p-8 space-y-8">
+            {/* Dados do Condomínio */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                  1. Dados do Condomínio
+                </h2>
               <div className="flex items-center gap-2">
                 <input
                   type="file"
@@ -557,8 +761,8 @@ export default function App() {
               </div>
             </div>
 
-            <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200 mb-6">
-              <label className="text-sm font-medium text-slate-900 block mb-2">
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 mb-6">
+              <label className="text-sm font-medium text-slate-900 dark:text-white block mb-2">
                 Índice de Reajuste
               </label>
               <div className="flex flex-wrap gap-6">
@@ -570,16 +774,16 @@ export default function App() {
                       value={indice}
                       checked={formData.indiceReajuste === indice}
                       onChange={handleInputChange}
-                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300"
+                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600"
                     />
-                    <span className="text-sm text-slate-700">{indice}</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{indice}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200">
-              <label className="text-sm font-medium text-slate-900 block mb-2">
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="text-sm font-medium text-slate-900 dark:text-white block mb-2">
                 Condições de Prazo (Cláusula 2.1)
               </label>
               
@@ -592,16 +796,16 @@ export default function App() {
                       value={opcao}
                       checked={formData.tipoPrazo === opcao}
                       onChange={handleInputChange}
-                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300"
+                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600"
                     />
-                    <span className="text-sm text-slate-700">{opcao}</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{opcao}</span>
                   </label>
                 ))}
               </div>
 
               {formData.tipoPrazo === 'B) Outro prazo determinado' && (
-                <div className="mt-4 pt-4 border-t border-slate-200">
-                  <label className="text-sm font-medium text-slate-700 block mb-1">
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Quantidade de meses
                   </label>
                   <input
@@ -609,15 +813,15 @@ export default function App() {
                     name="mesesOutroPrazo"
                     value={formData.mesesOutroPrazo}
                     onChange={handleInputChange}
-                    className="w-full md:w-1/2 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full md:w-1/2 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all dark:text-white"
                     placeholder="ex: 24 (vinte e quatro)"
                   />
                 </div>
               )}
             </div>
 
-            <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200 mt-4">
-              <label className="text-sm font-medium text-slate-900 block mb-2">
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 mt-4">
+              <label className="text-sm font-medium text-slate-900 dark:text-white block mb-2">
                 Condições de Aviso Prévio (Cláusula 2.2)
               </label>
               
@@ -630,16 +834,16 @@ export default function App() {
                       value={opcao}
                       checked={formData.tipoAvisoPrevio === opcao}
                       onChange={handleInputChange}
-                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300"
+                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600"
                     />
-                    <span className="text-sm text-slate-700">{opcao}</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{opcao}</span>
                   </label>
                 ))}
               </div>
 
               {formData.tipoAvisoPrevio === 'Previsão de dias' && (
-                <div className="mt-4 pt-4 border-t border-slate-200">
-                  <label className="text-sm font-medium text-slate-700 block mb-2">
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">
                     Quantidade de dias
                   </label>
                   <div className="flex gap-4">
@@ -651,9 +855,9 @@ export default function App() {
                           value={dias}
                           checked={formData.diasAvisoPrevio === dias}
                           onChange={handleInputChange}
-                          className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300"
+                          className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600"
                         />
-                        <span className="text-sm text-slate-700">{dias} dias</span>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{dias} dias</span>
                       </label>
                     ))}
                   </div>
@@ -661,13 +865,13 @@ export default function App() {
               )}
             </div>
 
-            <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200 mt-4">
-              <label className="text-sm font-medium text-slate-900 block mb-2">
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 mt-4">
+              <label className="text-sm font-medium text-slate-900 dark:text-white block mb-2">
                 Condições de Cobrança - Advocacia (Cláusula 3.5)
               </label>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 block mb-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">
                   Após quantos dias de atraso a cobrança será direcionada a um escritório de advocacia?
                 </label>
                 <div className="flex gap-4">
@@ -679,18 +883,53 @@ export default function App() {
                         value={dias}
                         checked={formData.diasCobrancaAdvocacia === dias}
                         onChange={handleInputChange}
-                        className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300"
+                        className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600"
                       />
-                      <span className="text-sm text-slate-700">{dias} dias</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{dias} dias</span>
                     </label>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200 mt-4">
-              <label className="text-sm font-medium text-slate-900 block mb-2">
-                Cláusula LGPD e Compliance (Cláusula 4.2)
+            {/* Biblioteca de Cláusulas Opcionais */}
+            <section>
+              <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                4. Cláusulas Opcionais
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {OPTIONAL_CLAUSES.map((clause) => (
+                  <button
+                    key={clause.id}
+                    onClick={() => toggleOptionalClause(clause.id)}
+                    className={`p-4 rounded-xl border text-left transition-all ${
+                      selectedOptionalClauses.includes(clause.id)
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 dark:border-emerald-500/50 ring-1 ring-emerald-500'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-sm font-semibold ${selectedOptionalClauses.includes(clause.id) ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                        {clause.title}
+                      </span>
+                      {selectedOptionalClauses.includes(clause.id) && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                      {clause.text}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <hr className="border-slate-100 dark:border-slate-800" />
+
+            {/* Cláusula LGPD e Compliance (Cláusula 4.2) */}
+            <section>
+              <label className="text-sm font-medium text-slate-900 dark:text-white block mb-4 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                5. LGPD e Compliance (Cláusula 4.2)
               </label>
               
               <div className="space-y-2">
@@ -713,15 +952,15 @@ export default function App() {
                   ))}
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-200 mt-4">
-              <label className="text-sm font-medium text-slate-900 block mb-2">
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 mt-4">
+              <label className="text-sm font-medium text-slate-900 dark:text-white block mb-2">
                 Foro (Cláusula 4.6)
               </label>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 block mb-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">
                   Qual cidade será eleita como foro?
                 </label>
                 <div className="flex flex-col gap-3">
@@ -732,9 +971,9 @@ export default function App() {
                       value="Padrão"
                       checked={formData.tipoForo === 'Padrão'}
                       onChange={handleInputChange}
-                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300"
+                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600"
                     />
-                    <span className="text-sm text-slate-700 font-medium">Padrão (São Paulo)</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">Padrão (São Paulo)</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -743,9 +982,9 @@ export default function App() {
                       value="Personalizado"
                       checked={formData.tipoForo === 'Personalizado'}
                       onChange={handleInputChange}
-                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300"
+                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600"
                     />
-                    <span className="text-sm text-slate-700 font-medium">Personalizado</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">Personalizado</span>
                   </label>
                 </div>
 
@@ -758,7 +997,7 @@ export default function App() {
                       onChange={handleInputChange}
                       placeholder="Digite ou selecione a cidade"
                       list="cidades-sp"
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:text-white"
                     />
                     <datalist id="cidades-sp">
                       <option value="Guarulhos" />
@@ -784,40 +1023,40 @@ export default function App() {
               </div>
             </div>
 
-            <div className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200 mt-6">
-              <h3 className="text-sm font-medium text-slate-900 mb-2">
+            <div className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 mt-6">
+              <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-2">
                 Pré-visualização das Cláusulas (Editável)
               </h3>
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Texto da Cláusula 2.1</label>
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Texto da Cláusula 2.1</label>
                 <textarea
                   name="clausula21"
                   value={formData.clausula21}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-sm text-slate-700"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-sm text-slate-700 dark:text-slate-300"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Texto da Cláusula 2.2</label>
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Texto da Cláusula 2.2</label>
                 <textarea
                   name="clausula22"
                   value={formData.clausula22}
                   onChange={handleInputChange}
                   rows={6}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-sm text-slate-700"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-sm text-slate-700 dark:text-slate-300"
                 />
               </div>
             </div>
 
-            <div className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200 mt-6">
+            <div className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700 mt-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-slate-900">
+                <h3 className="text-sm font-medium text-slate-900 dark:text-white">
                   Tabela de Serviços Especiais (Cláusula 4.1)
                 </h3>
                 <button
                   onClick={() => setIsTableVisible(!isTableVisible)}
-                  className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                  className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
                 >
                   {isTableVisible ? 'Minimizar' : 'Editar Tabela'}
                 </button>
@@ -825,57 +1064,57 @@ export default function App() {
               
               {isTableVisible && (
                 <div className="overflow-x-auto space-y-3">
-                  <table className="w-full text-sm text-left text-slate-600 border-collapse">
-                    <thead className="text-xs text-slate-700 uppercase bg-slate-200">
+                  <table className="w-full text-sm text-left text-slate-600 dark:text-slate-400 border-collapse">
+                    <thead className="text-xs text-slate-700 dark:text-slate-300 uppercase bg-slate-200 dark:bg-slate-700">
                       <tr>
-                        <th className="px-2 py-2 border border-slate-300 w-8"></th>
-                        <th className="px-4 py-2 border border-slate-300">
+                        <th className="px-2 py-2 border border-slate-300 dark:border-slate-600 w-8"></th>
+                        <th className="px-4 py-2 border border-slate-300 dark:border-slate-600">
                           <input 
                             type="text" 
                             value={table41Headers.servico} 
                             onChange={(e) => handleHeaderChange('servico', e.target.value)} 
-                            className="w-full bg-transparent border-none outline-none font-bold uppercase text-xs placeholder:text-slate-400 focus:bg-white/50 px-1 rounded" 
+                            className="w-full bg-transparent border-none outline-none font-bold uppercase text-xs placeholder:text-slate-400 focus:bg-white/50 dark:focus:bg-black/50 px-1 rounded dark:text-white" 
                             placeholder="Título da Coluna"
                           />
                         </th>
-                        <th className="px-4 py-2 border border-slate-300">
+                        <th className="px-4 py-2 border border-slate-300 dark:border-slate-600">
                           <input 
                             type="text" 
                             value={table41Headers.valor} 
                             onChange={(e) => handleHeaderChange('valor', e.target.value)} 
-                            className="w-full bg-transparent border-none outline-none font-bold uppercase text-xs placeholder:text-slate-400 focus:bg-white/50 px-1 rounded" 
+                            className="w-full bg-transparent border-none outline-none font-bold uppercase text-xs placeholder:text-slate-400 focus:bg-white/50 dark:focus:bg-black/50 px-1 rounded dark:text-white" 
                             placeholder="Título da Coluna"
                           />
                         </th>
-                        <th className="px-2 py-2 border border-slate-300 w-20 text-center">Ações</th>
+                        <th className="px-2 py-2 border border-slate-300 dark:border-slate-600 w-20 text-center">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {table41Data.map((row, index) => (
                         <tr 
                           key={index} 
-                          className={`bg-white border-b border-slate-200 transition-colors ${draggedRowIndex === index ? 'opacity-50 bg-slate-100' : ''}`}
+                          className={`bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 transition-colors ${draggedRowIndex === index ? 'opacity-50 bg-slate-100 dark:bg-slate-700' : ''}`}
                           draggable
                           onDragStart={(e) => handleDragStart(e, index)}
                           onDragOver={(e) => handleDragOver(e, index)}
                           onDrop={(e) => handleDrop(e, index)}
                         >
-                          <td className="px-1 py-1 border border-slate-300 text-center cursor-move text-slate-400 hover:text-slate-600">
+                          <td className="px-1 py-1 border border-slate-300 dark:border-slate-600 text-center cursor-move text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                             <GripVertical className="w-4 h-4 mx-auto" />
                           </td>
-                          <td className="px-2 py-1 border border-slate-300">
+                          <td className="px-2 py-1 border border-slate-300 dark:border-slate-600">
                             <input
                               type="text"
                               value={row.servico}
                               onChange={(e) => handleTableChange(index, 'servico', e.target.value)}
-                              className="w-full px-2 py-1 border-none focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                              className="w-full px-2 py-1 bg-transparent border-none focus:ring-2 focus:ring-emerald-500 outline-none text-sm dark:text-white"
                             />
                           </td>
-                          <td className="px-2 py-1 border border-slate-300">
+                          <td className="px-2 py-1 border border-slate-300 dark:border-slate-600">
                             <select
                               value={row.tipo}
                               onChange={(e) => handleTableChange(index, 'tipo', e.target.value)}
-                              className="w-full px-2 py-1 border-none focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                              className="w-full px-2 py-1 bg-transparent border-none focus:ring-2 focus:ring-emerald-500 outline-none text-sm dark:text-white dark:bg-slate-800"
                             >
                               <option value="valor">Valor</option>
                               <option value="isento">Isento</option>
@@ -887,15 +1126,15 @@ export default function App() {
                                 value={row.valor}
                                 onChange={(e) => handleTableChange(index, 'valor', e.target.value)}
                                 placeholder="Digite o valor"
-                                className="w-full px-2 py-1 border-t border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                                className="w-full px-2 py-1 bg-transparent border-t border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none text-sm dark:text-white"
                               />
                             )}
                           </td>
-                          <td className="px-2 py-1 border border-slate-300 text-center">
+                          <td className="px-2 py-1 border border-slate-300 dark:border-slate-600 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button 
                                 onClick={() => insertRow(index)} 
-                                className="text-emerald-600 hover:text-emerald-800 p-1"
+                                className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 p-1"
                                 title="Adicionar linha abaixo"
                               >
                                 <Plus className="w-4 h-4" />
@@ -951,6 +1190,78 @@ export default function App() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Preview Column */}
+      {showPreview && (
+          <div className="hidden lg:block sticky top-8 h-[calc(100vh-4rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col transition-all duration-300">
+            <div className="bg-slate-100 dark:bg-slate-800 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Eye className="w-4 h-4 text-emerald-500" />
+                Visualização em Tempo Real
+              </h2>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">A4 PREVIEW</span>
+            </div>
+            <div className="flex-1 overflow-auto p-8 bg-slate-50 dark:bg-slate-950">
+              <div className="bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 p-12 min-h-full mx-auto max-w-[21cm] text-slate-900 dark:text-slate-100 font-serif text-[10pt] leading-relaxed">
+                <div className="text-center mb-8">
+                  <h1 className="text-lg font-bold uppercase underline decoration-slate-300 underline-offset-4">CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h1>
+                </div>
+
+                <div className="space-y-4 text-justify">
+                  <p>
+                    Pelo presente instrumento particular, de um lado <strong>SELL ADMINISTRADORA DE CONDOMÍNIOS LTDA</strong>, com sede na Av. Pompéia, 723, São Paulo/SP, inscrita no CNPJ sob o nº 14.804.150/0001-62, doravante denominada <strong>CONTRATADA</strong>, e de outro lado o <strong>{formData.nomeCondominio || '____________________'}</strong>, inscrito no CNPJ sob o nº <strong>{formData.cnpjCondominio || '____________________'}</strong>, situado em <strong>{formData.enderecoCondominio || '____________________'}</strong>, representado por seu síndico(a) <strong>{formData.nomeSindico || '____________________'}</strong>, doravante denominado <strong>CONTRATANTE</strong>, têm entre si justo e contratado o seguinte:
+                  </p>
+
+                  <section>
+                    <h3 className="font-bold uppercase mb-1">CLÁUSULA PRIMEIRA - DO OBJETO</h3>
+                    <p>O presente contrato tem por objeto a prestação de serviços de administração condominial pela CONTRATADA ao CONTRATANTE...</p>
+                  </section>
+
+                  <section>
+                    <h3 className="font-bold uppercase mb-1">CLÁUSULA SEGUNDA - DO PRAZO E RESCISÃO</h3>
+                    <p><strong>2.1.</strong> {formData.clausula21}</p>
+                    <p><strong>2.2.</strong> {formData.clausula22}</p>
+                  </section>
+
+                  <section>
+                    <h3 className="font-bold uppercase mb-1">CLÁUSULA TERCEIRA - DOS HONORÁRIOS</h3>
+                    <p>Pela prestação dos serviços ora contratados, o CONTRATANTE pagará à CONTRATADA a importância mensal de <strong>{formData.valorPrestacao || 'R$ 0,00'}</strong>...</p>
+                  </section>
+
+                  {selectedOptionalClauses.length > 0 && (
+                    <section className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
+                      <h3 className="font-bold uppercase mb-2 text-emerald-600 dark:text-emerald-400">CLÁUSULAS ADICIONAIS SELECIONADAS</h3>
+                      <div className="space-y-3">
+                        {selectedOptionalClauses.map(id => {
+                          const clause = OPTIONAL_CLAUSES.find(c => c.id === id);
+                          return clause ? (
+                            <div key={id} className="text-sm italic text-slate-600 dark:text-slate-400">
+                              <strong>{clause.title}:</strong> {clause.text}
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    </section>
+                  )}
+
+                  <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-8 text-center text-[8pt]">
+                    <div>
+                      <div className="border-t border-slate-900 dark:border-slate-100 pt-1 mt-8"></div>
+                      <p className="font-bold uppercase">CONTRATADA</p>
+                      <p>SELL ADMINISTRADORA</p>
+                    </div>
+                    <div>
+                      <div className="border-t border-slate-900 dark:border-slate-100 pt-1 mt-8"></div>
+                      <p className="font-bold uppercase">CONTRATANTE</p>
+                      <p>{formData.nomeCondominio || 'CONDOMÍNIO'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
