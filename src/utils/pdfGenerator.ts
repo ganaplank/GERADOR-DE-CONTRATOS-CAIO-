@@ -11,7 +11,7 @@ if (typeof pdfMakeInstance.addVirtualFileSystem === 'function') {
   pdfMakeInstance.vfs = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs || pdfFonts;
 }
 
-export const generatePDF = (formData: any, table41Data: any[], table41Headers: any) => {
+export const generatePDF = (formData: any, table41Data: any[], table41Headers: any, additionalClauses: { id: string; title: string; text: string }[] = []) => {
   const docDefinition = {
     pageSize: 'A4',
     pageMargins: [40, 90, 40, 60],
@@ -245,6 +245,17 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
       { text: '4.4. As partes declaram expressamente substituídos todos os instrumentos ou acordos anteriormente celebrados, que possuam o mesmo objeto do presente contrato, de modo que a nova relação jurídico-comercial (condições, procedimentos, valores etc.), decorrente dos instrumentos antigos, passa a ser regida pelo disposto no presente instrumento a contar da data de início da vigência deste contrato.\n\n' },
       { text: '4.5. Fica expressa e irrevogavelmente estabelecido que a tolerância ou o não exercício pelas partes, de direitos garantidos em lei ou por este contrato, não significará renúncia ou novação, podendo as partes exercê-los a qualquer momento.\n\n' },
       { text: `4.6. As partes elegem o foro da cidade de ${formData.tipoForo === 'Personalizado' && formData.cidadeForo ? formData.cidadeForo : 'São Paulo'}, Estado de São Paulo, para dirimir quaisquer questões provenientes deste instrumento, renunciando a qualquer outro, por mais privilegiado que seja.\n\n` },
+      
+      ...(additionalClauses.length > 0 ? [
+        { text: 'CLÁUSULAS ADICIONAIS\n\n', style: 'boldText', color: '#059669' },
+        ...additionalClauses.map((clause, index) => ({
+          text: [
+            { text: `${index + 5}. ${clause.title}: `, bold: true },
+            { text: `${clause.text}\n\n` }
+          ]
+        }))
+      ] : []),
+
       { text: '4.7. As PARTES declaram que estarem justos e contratados, assinam o presente Instrumento Particular de Contrato de Prestação de Serviços por meio eletrônico, com o uso da plataforma Clicksign (i.e., https://www.clicksign.com/), nos termos da Medida Provisória nº 2.200-2/2001. As PARTES e os Intervenientes anuentes reconhecem como válidas as assinaturas realizadas inclusive com certificados não emitidos pela Infraestrutura de Chaves Públicas Brasileira (i.e., ICP-Brasil), nos termos do Artigo 10, Parágrafo 2º da Medida Provisória nº 2.200-2/2001, quando enviadas para os E-mails encaminhados neste Contrato. Este Contrato produz efeitos para todas as PARTES e para os Intervenientes Anuentes a partir da data indicada no QUADRO RESUMO, ainda que uma ou mais PARTES realizem a assinatura em data posterior, para que surtam seus legais e jurídicos efeitos.\n\n' },
 
       { text: '____________________________________________________', alignment: 'center', margin: [0, 40, 0, 0] },

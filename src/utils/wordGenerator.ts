@@ -3,7 +3,7 @@ import { saveAs } from 'file-saver';
 import { logoBase64 } from './logoBase64';
 import { iconBase64 } from './iconBase64';
 
-export const generateWord = async (formData: any, table41Data: any[], table41Headers: any) => {
+export const generateWord = async (formData: any, table41Data: any[], table41Headers: any, additionalClauses: { id: string; title: string; text: string }[] = []) => {
   const createBoldParagraph = (text: string) => new Paragraph({ children: [new TextRun({ text, bold: true })] });
   const createParagraph = (text: string) => new Paragraph({ text, alignment: AlignmentType.JUSTIFIED });
   
@@ -364,6 +364,22 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
         new Paragraph({ text: "" }),
         createParagraph(`4.6. As partes elegem o foro da cidade de ${formData.tipoForo === 'Personalizado' && formData.cidadeForo ? formData.cidadeForo : 'São Paulo'}, Estado de São Paulo, para dirimir quaisquer questões provenientes deste instrumento, renunciando a qualquer outro, por mais privilegiado que seja.`),
         new Paragraph({ text: "" }),
+        
+        ...(additionalClauses.length > 0 ? [
+          new Paragraph({ children: [new TextRun({ text: "CLÁUSULAS ADICIONAIS", bold: true, color: "059669" })] }),
+          new Paragraph({ text: "" }),
+          ...additionalClauses.flatMap((clause, index) => [
+            new Paragraph({
+              children: [
+                new TextRun({ text: `${index + 5}. ${clause.title}: `, bold: true }),
+                new TextRun({ text: clause.text })
+              ],
+              alignment: AlignmentType.JUSTIFIED
+            }),
+            new Paragraph({ text: "" })
+          ])
+        ] : []),
+
         createParagraph("4.7. As PARTES declaram que estarem justos e contratados, assinam o presente Instrumento Particular de Contrato de Prestação de Serviços por meio eletrônico, com o uso da plataforma Clicksign (i.e., https://www.clicksign.com/), nos termos da Medida Provisória nº 2.200-2/2001. As PARTES e os Intervenientes anuentes reconhecem como válidas as assinaturas realizadas inclusive com certificados não emitidos pela Infraestrutura de Chaves Públicas Brasileira (i.e., ICP-Brasil), nos termos do Artigo 10, Parágrafo 2º da Medida Provisória nº 2.200-2/2001, quando enviadas para os E-mails encaminhados neste Contrato. Este Contrato produz efeitos para todas as PARTES e para os Intervenientes Anuentes a partir da data indicada no QUADRO RESUMO, ainda que uma ou mais PARTES realizem a assinatura em data posterior, para que surtam seus legais e jurídicos efeitos."),
         new Paragraph({ text: "" }),
         new Paragraph({ text: "" }),

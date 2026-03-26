@@ -2,20 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   FileText, Download, Building2, User, Calendar, FileDown, 
   Upload, Search, ChevronDown, GripVertical, X, Plus,
-  Moon, Sun, Save, FileUp, Eye, CheckCircle2, AlertCircle
+  Moon, Sun, Save, FileUp, Eye, CheckCircle2, AlertCircle,
+  Menu
 } from 'lucide-react';
 import { generatePDF } from './utils/pdfGenerator';
 import { generateWord } from './utils/wordGenerator';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
 import Fuse from 'fuse.js';
-
-const OPTIONAL_CLAUSES = [
-  { id: 'seguro', title: 'Seguro Obrigatório', text: 'O CONDOMÍNIO obriga-se a manter seguro contra incêndio ou qualquer outro evento que possa causar destruição total ou parcial da edificação, abrangendo todas as unidades autônomas e partes comuns.' },
-  { id: 'inadimplencia', title: 'Combate à Inadimplência', text: 'A ADMINISTRADORA enviará mensalmente relatório de inadimplência atualizado e promoverá a cobrança administrativa dos débitos vencidos há mais de 30 dias.' },
-  { id: 'vistorias', title: 'Vistorias Periódicas', text: 'A ADMINISTRADORA realizará vistorias trimestrais nas áreas comuns do condomínio, emitindo relatório técnico sobre o estado de conservação das instalações.' },
-  { id: 'assembleia_extra', title: 'Assembleias Extras Ilimitadas', text: 'Fica estipulado que a ADMINISTRADORA participará de todas as assembleias extraordinárias convocadas, sem custo adicional por evento.' }
-];
 
 const validateCPF = (cpf: string) => {
   const cleanCPF = cpf.replace(/\D/g, '');
@@ -65,7 +59,10 @@ const validateCNPJ = (cnpj: string) => {
 export default function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [showPreview, setShowPreview] = useState(false);
-  const [selectedOptionalClauses, setSelectedOptionalClauses] = useState<string[]>([]);
+  const [additionalClauses, setAdditionalClauses] = useState<{ id: string; title: string; text: string }[]>([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [newClauseTitle, setNewClauseTitle] = useState('');
+  const [newClauseText, setNewClauseText] = useState('');
   
   const [formData, setFormData] = useState({
     nomeCondominio: '',
@@ -226,10 +223,10 @@ export default function App() {
     const savedData = localStorage.getItem('contractDraft');
     if (savedData) {
       try {
-        const { formData: savedForm, table41Data: savedTable, selectedOptionalClauses: savedClauses } = JSON.parse(savedData);
+        const { formData: savedForm, table41Data: savedTable, additionalClauses: savedClauses } = JSON.parse(savedData);
         if (savedForm) setFormData(prev => ({ ...prev, ...savedForm }));
         if (savedTable) setTable41Data(savedTable);
-        if (savedClauses) setSelectedOptionalClauses(savedClauses);
+        if (savedClauses) setAdditionalClauses(savedClauses);
       } catch (e) {
         console.error('Error loading draft from localStorage', e);
       }
@@ -237,9 +234,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const dataToSave = JSON.stringify({ formData, table41Data, selectedOptionalClauses });
+    const dataToSave = JSON.stringify({ formData, table41Data, additionalClauses });
     localStorage.setItem('contractDraft', dataToSave);
-  }, [formData, table41Data, selectedOptionalClauses]);
+  }, [formData, table41Data, additionalClauses]);
 
   useEffect(() => {
     if (darkMode) {
@@ -251,7 +248,7 @@ export default function App() {
   }, [darkMode]);
 
   const handleExportDraft = () => {
-    const data = JSON.stringify({ formData, table41Data, selectedOptionalClauses }, null, 2);
+    const data = JSON.stringify({ formData, table41Data, additionalClauses }, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -268,10 +265,10 @@ export default function App() {
     reader.onload = (evt) => {
       try {
         const content = evt.target?.result as string;
-        const { formData: importedForm, table41Data: importedTable, selectedOptionalClauses: importedClauses } = JSON.parse(content);
+        const { formData: importedForm, table41Data: importedTable, additionalClauses: importedClauses } = JSON.parse(content);
         if (importedForm) setFormData(importedForm);
         if (importedTable) setTable41Data(importedTable);
-        if (importedClauses) setSelectedOptionalClauses(importedClauses);
+        if (importedClauses) setAdditionalClauses(importedClauses);
         alert('Rascunho importado com sucesso!');
       } catch (e) {
         alert('Erro ao importar rascunho. Arquivo inválido.');
@@ -280,10 +277,20 @@ export default function App() {
     reader.readAsText(file);
   };
 
-  const toggleOptionalClause = (id: string) => {
-    setSelectedOptionalClauses(prev => 
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
+  const addAdditionalClause = () => {
+    if (!newClauseTitle.trim() || !newClauseText.trim()) return;
+    const newClause = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: newClauseTitle,
+      text: newClauseText
+    };
+    setAdditionalClauses([...additionalClauses, newClause]);
+    setNewClauseTitle('');
+    setNewClauseText('');
+  };
+
+  const removeAdditionalClause = (id: string) => {
+    setAdditionalClauses(additionalClauses.filter(c => c.id !== id));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -467,11 +474,20 @@ export default function App() {
         {/* Form Column */}
         <div className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-all ${showPreview ? '' : 'lg:col-span-2 max-w-3xl mx-auto'}`}>
           <div className="bg-slate-900 dark:bg-black px-8 py-6 text-white flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <FileText className="w-8 h-8 text-emerald-400" />
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Gerador de Contratos</h1>
-                <p className="text-slate-400 text-sm">Sell Administradora de Condomínios</p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setIsMenuOpen(true)}
+                className="p-2 -ml-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-300"
+                title="Menu de Opções"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <div className="flex items-center gap-3">
+                <FileText className="w-8 h-8 text-emerald-400" />
+                <div>
+                  <h1 className="text-2xl font-semibold tracking-tight">Gerador de Contratos</h1>
+                  <p className="text-slate-400 text-sm">Sell Administradora de Condomínios</p>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -892,37 +908,8 @@ export default function App() {
               </div>
             </div>
 
-            {/* Biblioteca de Cláusulas Opcionais */}
-            <section>
-              <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-slate-500 dark:text-slate-400" />
-                4. Cláusulas Opcionais
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {OPTIONAL_CLAUSES.map((clause) => (
-                  <button
-                    key={clause.id}
-                    onClick={() => toggleOptionalClause(clause.id)}
-                    className={`p-4 rounded-xl border text-left transition-all ${
-                      selectedOptionalClauses.includes(clause.id)
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 dark:border-emerald-500/50 ring-1 ring-emerald-500'
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-sm font-semibold ${selectedOptionalClauses.includes(clause.id) ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                        {clause.title}
-                      </span>
-                      {selectedOptionalClauses.includes(clause.id) && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                      {clause.text}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </section>
-
+            {/* Biblioteca de Cláusulas Opcionais Removida */}
+            
             <hr className="border-slate-100 dark:border-slate-800" />
 
             {/* Cláusula LGPD e Compliance (Cláusula 4.2) */}
@@ -1165,7 +1152,7 @@ export default function App() {
             <button
               onClick={() => {
                 if (validateForm()) {
-                  generatePDF(formData, table41Data, table41Headers);
+                  generatePDF(formData, table41Data, table41Headers, additionalClauses);
                 } else {
                   alert('Por favor, preencha todos os campos obrigatórios corretamente.');
                 }
@@ -1178,7 +1165,7 @@ export default function App() {
             <button
               onClick={() => {
                 if (validateForm()) {
-                  generateWord(formData, table41Data, table41Headers);
+                  generateWord(formData, table41Data, table41Headers, additionalClauses);
                 } else {
                   alert('Por favor, preencha todos os campos obrigatórios corretamente.');
                 }
@@ -1229,18 +1216,15 @@ export default function App() {
                     <p>Pela prestação dos serviços ora contratados, o CONTRATANTE pagará à CONTRATADA a importância mensal de <strong>{formData.valorPrestacao || 'R$ 0,00'}</strong>...</p>
                   </section>
 
-                  {selectedOptionalClauses.length > 0 && (
+                  {additionalClauses.length > 0 && (
                     <section className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
-                      <h3 className="font-bold uppercase mb-2 text-emerald-600 dark:text-emerald-400">CLÁUSULAS ADICIONAIS SELECIONADAS</h3>
+                      <h3 className="font-bold uppercase mb-2 text-emerald-600 dark:text-emerald-400">CLÁUSULAS ADICIONAIS</h3>
                       <div className="space-y-3">
-                        {selectedOptionalClauses.map(id => {
-                          const clause = OPTIONAL_CLAUSES.find(c => c.id === id);
-                          return clause ? (
-                            <div key={id} className="text-sm italic text-slate-600 dark:text-slate-400">
-                              <strong>{clause.title}:</strong> {clause.text}
-                            </div>
-                          ) : null;
-                        })}
+                        {additionalClauses.map((clause, index) => (
+                          <div key={clause.id} className="text-sm italic text-slate-600 dark:text-slate-400">
+                            <strong>{index + 5}. {clause.title}:</strong> {clause.text}
+                          </div>
+                        ))}
                       </div>
                     </section>
                   )}
@@ -1263,6 +1247,116 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* Sidebar Menu */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMenuOpen(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 h-full w-full max-w-md bg-white dark:bg-slate-900 shadow-2xl z-50 overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Menu className="w-6 h-6 text-emerald-500" />
+                  Menu de Opções
+                </h2>
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6 text-slate-500" />
+                </button>
+              </div>
+
+              {/* Tabs Header */}
+              <div className="flex border-b border-slate-200 dark:border-slate-800">
+                <button className="flex-1 py-3 text-sm font-semibold text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50/30 dark:bg-emerald-900/10">
+                  Cláusulas Adicionais
+                </button>
+                <button className="flex-1 py-3 text-sm font-semibold text-slate-400 cursor-not-allowed" disabled>
+                  Configurações
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Add New Clause Form */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Nova Cláusula Personalizada</h3>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Título da Cláusula</label>
+                    <input
+                      type="text"
+                      value={newClauseTitle}
+                      onChange={(e) => setNewClauseTitle(e.target.value)}
+                      placeholder="Ex: Multa por Atraso"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none dark:text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Texto da Cláusula</label>
+                    <textarea
+                      value={newClauseText}
+                      onChange={(e) => setNewClauseText(e.target.value)}
+                      placeholder="Descreva o texto da cláusula aqui..."
+                      rows={4}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none dark:text-white"
+                    />
+                  </div>
+                  <button
+                    onClick={addAdditionalClause}
+                    disabled={!newClauseTitle.trim() || !newClauseText.trim()}
+                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Adicionar ao Contrato
+                  </button>
+                </div>
+
+                {/* List of Additional Clauses */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Cláusulas no Contrato ({additionalClauses.length})</h3>
+                  {additionalClauses.length === 0 ? (
+                    <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                      <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="text-slate-500 dark:text-slate-400 text-sm">Nenhuma cláusula personalizada.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {additionalClauses.map((clause) => (
+                        <div
+                          key={clause.id}
+                          className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm group relative"
+                        >
+                          <button
+                            onClick={() => removeAdditionalClause(clause.id)}
+                            className="absolute top-2 right-2 p-1 text-slate-400 hover:text-red-500 transition-colors"
+                            title="Remover Cláusula"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                          <h4 className="font-bold text-slate-900 dark:text-white mb-1 pr-6">{clause.title}</h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">{clause.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
