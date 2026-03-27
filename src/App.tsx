@@ -266,7 +266,7 @@ export default function App() {
   };
 
   const [condominiosList, setCondominiosList] = useState<any[]>([]);
-  const [isLoadingDefault, setIsLoadingDefault] = useState(true);
+  const [isLoadingDefault, setIsLoadingDefault] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedCondominioId, setSelectedCondominioId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -451,45 +451,18 @@ export default function App() {
     setIsLoadingDefault(true);
     setFetchError(null);
     try {
-      // Adicionando timestamp para evitar cache do navegador/Vercel que pode retornar 404/HTML
-      const timestamp = new Date().getTime();
-      const baseUrl = import.meta.env.BASE_URL || '/';
+      const id = '14oZl3VokWLf9nwi3VnFvZyGxyvGzJ61XWCzt8fY_Hh8';
+      const fetchUrl = `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`;
+
+      console.log('Tentando carregar base de condomínios de:', fetchUrl);
       
-      // Garante que o path comece com / se não for relativo
-      let path = `${baseUrl}/condominios.xlsx?t=${timestamp}`.replace(/\/+/g, '/');
+      const res = await fetch(fetchUrl);
       
-      console.log('Tentando carregar base de condomínios padrão de:', path);
-      
-      let res = await fetch(path);
-      
-      // Fallback se o path absoluto falhar
       if (!res.ok) {
-        console.log('Tentativa com path absoluto falhou, tentando relativo...');
-        res = await fetch(`condominios.xlsx?t=${timestamp}`);
-      }
-
-      if (!res.ok) {
-        throw new Error(`Arquivo não encontrado (Status: ${res.status}). Verifique se 'public/condominios.xlsx' existe.`);
+        throw new Error(`Falha ao carregar a planilha (Status: ${res.status}). Verifique se a planilha está configurada como "Qualquer pessoa com o link pode ver".`);
       }
       
-      const contentType = res.headers.get('Content-Type');
-      if (contentType && contentType.includes('text/html')) {
-        throw new Error('O servidor retornou uma página HTML em vez do arquivo Excel. Verifique se o arquivo condominios.xlsx está na pasta public.');
-      }
-
-      const contentLength = res.headers.get('Content-Length');
-      if (contentLength) {
-        console.log(`Tamanho do arquivo: ${(parseInt(contentLength) / (1024 * 1024)).toFixed(2)} MB`);
-      }
-
-      const blob = await res.blob();
-      console.log(`Tamanho do Blob: ${(blob.size / (1024 * 1024)).toFixed(2)} MB`);
-      
-      if (blob.size > 50 * 1024 * 1024) { // 50MB limit for safety
-        throw new Error(`O arquivo é muito grande (${(blob.size / (1024 * 1024)).toFixed(2)} MB).`);
-      }
-
-      const arrayBuffer = await blob.arrayBuffer();
+      const arrayBuffer = await res.arrayBuffer();
       
       try {
         const wb = XLSX.read(arrayBuffer, { 
@@ -501,7 +474,7 @@ export default function App() {
         });
 
         if (!wb.SheetNames || wb.SheetNames.length === 0) {
-          throw new Error('O arquivo Excel não contém nenhuma planilha.');
+          throw new Error('O arquivo não contém nenhuma planilha.');
         }
 
         const wsname = wb.SheetNames[0];
@@ -512,14 +485,14 @@ export default function App() {
           setCondominiosList(data);
           console.log('Base de condomínios carregada com sucesso:', data.length, 'itens');
         } else {
-          throw new Error('O arquivo condominios.xlsx foi encontrado, mas parece estar vazio ou sem dados na primeira aba.');
+          throw new Error('A planilha foi encontrada, mas parece estar vazia ou sem dados na primeira aba.');
         }
       } catch (readErr) {
-        console.error('Erro ao processar XLSX:', readErr);
-        throw new Error('Erro ao processar o arquivo Excel. Certifique-se de que é um arquivo .xlsx válido.');
+        console.error('Erro ao processar arquivo:', readErr);
+        throw new Error('Erro ao processar a planilha. Certifique-se de que é um link válido do Google Sheets.');
       }
     } catch (err) {
-      console.error('Erro detalhado ao carregar base padrão:', err);
+      console.error('Erro detalhado ao carregar base:', err);
       setFetchError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsLoadingDefault(false);
@@ -670,17 +643,17 @@ export default function App() {
             </div>
 
             {isLoadingDefault ? (
-              <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 flex items-center gap-2">
+              <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                Carregando base de condomínios padrão...
+                Carregando base de condomínios...
               </div>
             ) : fetchError ? (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                <p className="font-semibold mb-1">Erro ao carregar base automática:</p>
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-lg text-sm text-red-700 dark:text-red-400">
+                <p className="font-semibold mb-1">Erro ao carregar base de condomínios:</p>
                 <p className="mb-2">{fetchError}</p>
                 <button 
                   onClick={loadDefaultCondominios}
-                  className="text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors font-medium"
+                  className="text-xs bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 px-2 py-1 rounded transition-colors font-medium"
                 >
                   Tentar Novamente
                 </button>
