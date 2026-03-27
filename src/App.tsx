@@ -61,6 +61,9 @@ export default function App() {
   const [showPreview, setShowPreview] = useState(false);
   const [additionalClauses, setAdditionalClauses] = useState<{ id: string; title: string; text: string }[]>([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [pendingDownloadType, setPendingDownloadType] = useState<'pdf' | 'word' | null>(null);
   const [newClauseTitle, setNewClauseTitle] = useState('');
   const [newClauseText, setNewClauseText] = useState('');
   
@@ -89,33 +92,87 @@ export default function App() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showPreview && window.innerWidth < 1024) {
+      previewRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showPreview]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.nomeCondominio) newErrors.nomeCondominio = 'Nome do condomínio é obrigatório';
+    const missing: string[] = [];
+
+    if (!formData.nomeCondominio) {
+      newErrors.nomeCondominio = 'Nome do condomínio é obrigatório';
+      missing.push('Nome do Condomínio');
+    }
     
     if (!formData.cnpjCondominio) {
       newErrors.cnpjCondominio = 'CNPJ é obrigatório';
+      missing.push('CNPJ do Condomínio');
     } else if (!validateCNPJ(formData.cnpjCondominio)) {
       newErrors.cnpjCondominio = 'CNPJ inválido';
+      missing.push('CNPJ do Condomínio (Inválido)');
     }
 
-    if (!formData.nomeSindico) newErrors.nomeSindico = 'Nome do síndico é obrigatório';
+    if (!formData.nomeSindico) {
+      newErrors.nomeSindico = 'Nome do síndico é obrigatório';
+      missing.push('Nome do Síndico');
+    }
     
     if (!formData.cpfSindico) {
       newErrors.cpfSindico = 'CPF é obrigatório';
+      missing.push('CPF/CNPJ do Síndico');
     } else if (formData.cpfSindico.replace(/\D/g, '').length <= 11 && !validateCPF(formData.cpfSindico)) {
       newErrors.cpfSindico = 'CPF inválido';
+      missing.push('CPF do Síndico (Inválido)');
     } else if (formData.cpfSindico.replace(/\D/g, '').length > 11 && !validateCNPJ(formData.cpfSindico)) {
       newErrors.cpfSindico = 'CNPJ do síndico inválido';
+      missing.push('CNPJ do Síndico (Inválido)');
     }
 
-    if (!formData.emailSindico || !/\S+@\S+\.\S+/.test(formData.emailSindico)) newErrors.emailSindico = 'E-mail inválido';
-    if (!formData.dataBase) newErrors.dataBase = 'Data-base é obrigatória';
-    if (!formData.valorPrestacao) newErrors.valorPrestacao = 'Valor da prestação é obrigatório';
+    if (!formData.emailSindico || !/\S+@\S+\.\S+/.test(formData.emailSindico)) {
+      newErrors.emailSindico = 'E-mail inválido';
+      missing.push('E-mail do Síndico');
+    }
+    if (!formData.dataBase) {
+      newErrors.dataBase = 'Data-base é obrigatória';
+      missing.push('Data-base');
+    }
+    if (!formData.valorPrestacao) {
+      newErrors.valorPrestacao = 'Valor da prestação é obrigatório';
+      missing.push('Valor da Prestação');
+    }
     
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return missing;
+  };
+
+  const handleDownloadAttempt = (type: 'pdf' | 'word') => {
+    const missing = validateForm();
+    if (missing.length > 0) {
+      setMissingFields(missing);
+      setPendingDownloadType(type);
+      setShowValidationModal(true);
+    } else {
+      if (type === 'pdf') {
+        generatePDF(formData, table41Data, table41Headers, additionalClauses);
+      } else {
+        generateWord(formData, table41Data, table41Headers, additionalClauses);
+      }
+    }
+  };
+
+  const proceedWithDownload = () => {
+    if (pendingDownloadType === 'pdf') {
+      generatePDF(formData, table41Data, table41Headers, additionalClauses);
+    } else if (pendingDownloadType === 'word') {
+      generateWord(formData, table41Data, table41Headers, additionalClauses);
+    }
+    setShowValidationModal(false);
+    setPendingDownloadType(null);
   };
 
   const [table41Data, setTable41Data] = useState([
@@ -361,10 +418,8 @@ export default function App() {
     return idA.localeCompare(idB);
   });
 
-  const filteredCondominios = React.useMemo(() => {
-    if (!searchTerm) return sortedCondominios;
-
-    const fuse = new Fuse(sortedCondominios, {
+  const fuse = React.useMemo(() => {
+    return new Fuse(sortedCondominios, {
       keys: [
         { name: 'ID', weight: 0.3 },
         { name: 'Nome', weight: 0.7 }
@@ -375,6 +430,10 @@ export default function App() {
       minMatchCharLength: 1,
       shouldSort: true
     });
+  }, [sortedCondominios]);
+
+  const filteredCondominios = React.useMemo(() => {
+    if (!searchTerm) return sortedCondominios;
 
     // Also allow exact ID matching if it's a number
     const exactIdMatch = sortedCondominios.find(c => String(c.ID).padStart(4, '0') === searchTerm.padStart(4, '0'));
@@ -386,33 +445,78 @@ export default function App() {
     }
     
     return results;
-  }, [searchTerm, sortedCondominios]);
+  }, [searchTerm, sortedCondominios, fuse]);
 
   const loadDefaultCondominios = async () => {
     setIsLoadingDefault(true);
     setFetchError(null);
     try {
-      // Use a safer way to get the base path
-      const path = 'condominios.xlsx';
+      // Adicionando timestamp para evitar cache do navegador/Vercel que pode retornar 404/HTML
+      const timestamp = new Date().getTime();
+      const baseUrl = import.meta.env.BASE_URL || '/';
+      
+      // Garante que o path comece com / se não for relativo
+      let path = `${baseUrl}/condominios.xlsx?t=${timestamp}`.replace(/\/+/g, '/');
       
       console.log('Tentando carregar base de condomínios padrão de:', path);
       
-      const res = await fetch(path);
+      let res = await fetch(path);
+      
+      // Fallback se o path absoluto falhar
       if (!res.ok) {
-        throw new Error(`Arquivo não encontrado (Status: ${res.status}). Verifique se 'public/condominios.xlsx' existe no seu repositório e se o build foi concluído.`);
+        console.log('Tentativa com path absoluto falhou, tentando relativo...');
+        res = await fetch(`condominios.xlsx?t=${timestamp}`);
+      }
+
+      if (!res.ok) {
+        throw new Error(`Arquivo não encontrado (Status: ${res.status}). Verifique se 'public/condominios.xlsx' existe.`);
       }
       
-      const arrayBuffer = await res.arrayBuffer();
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws);
+      const contentType = res.headers.get('Content-Type');
+      if (contentType && contentType.includes('text/html')) {
+        throw new Error('O servidor retornou uma página HTML em vez do arquivo Excel. Verifique se o arquivo condominios.xlsx está na pasta public.');
+      }
+
+      const contentLength = res.headers.get('Content-Length');
+      if (contentLength) {
+        console.log(`Tamanho do arquivo: ${(parseInt(contentLength) / (1024 * 1024)).toFixed(2)} MB`);
+      }
+
+      const blob = await res.blob();
+      console.log(`Tamanho do Blob: ${(blob.size / (1024 * 1024)).toFixed(2)} MB`);
       
-      if (data && data.length > 0) {
-        setCondominiosList(data);
-        console.log('Base de condomínios carregada com sucesso:', data.length, 'itens');
-      } else {
-        throw new Error('O arquivo condominios.xlsx foi encontrado, mas parece estar vazio ou com formato inválido.');
+      if (blob.size > 50 * 1024 * 1024) { // 50MB limit for safety
+        throw new Error(`O arquivo é muito grande (${(blob.size / (1024 * 1024)).toFixed(2)} MB).`);
+      }
+
+      const arrayBuffer = await blob.arrayBuffer();
+      
+      try {
+        const wb = XLSX.read(arrayBuffer, { 
+          type: 'array',
+          cellDates: true,
+          cellStyles: false,
+          cellHTML: false,
+          cellFormula: false
+        });
+
+        if (!wb.SheetNames || wb.SheetNames.length === 0) {
+          throw new Error('O arquivo Excel não contém nenhuma planilha.');
+        }
+
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws, { defval: "" });
+        
+        if (data && data.length > 0) {
+          setCondominiosList(data);
+          console.log('Base de condomínios carregada com sucesso:', data.length, 'itens');
+        } else {
+          throw new Error('O arquivo condominios.xlsx foi encontrado, mas parece estar vazio ou sem dados na primeira aba.');
+        }
+      } catch (readErr) {
+        console.error('Erro ao processar XLSX:', readErr);
+        throw new Error('Erro ao processar o arquivo Excel. Certifique-se de que é um arquivo .xlsx válido.');
       }
     } catch (err) {
       console.error('Erro detalhado ao carregar base padrão:', err);
@@ -470,9 +574,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className={`mx-auto grid grid-cols-1 ${showPreview ? 'lg:grid-cols-2 max-w-7xl' : 'max-w-3xl'} gap-8 transition-all duration-500`}>
         {/* Form Column */}
-        <div className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-all ${showPreview ? '' : 'lg:col-span-2 max-w-3xl mx-auto'}`}>
+        <div className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-all ${showPreview ? '' : 'lg:col-span-2'}`}>
           <div className="bg-slate-900 dark:bg-black px-8 py-6 text-white flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
@@ -521,7 +625,15 @@ export default function App() {
                 onChange={handleImportDraft}
               />
               <button
-                onClick={() => setShowPreview(!showPreview)}
+                onClick={() => {
+                  const newShowPreview = !showPreview;
+                  setShowPreview(newShowPreview);
+                  if (newShowPreview) {
+                    setTimeout(() => {
+                      previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                  }
+                }}
                 className={`p-2 rounded-lg transition-colors ${showPreview ? 'bg-emerald-500 text-white' : 'hover:bg-slate-800 text-slate-300'}`}
                 title="Visualização em Tempo Real"
               >
@@ -1150,26 +1262,14 @@ export default function App() {
           {/* Submit Buttons */}
           <div className="pt-4 flex flex-col sm:flex-row gap-4">
             <button
-              onClick={() => {
-                if (validateForm()) {
-                  generatePDF(formData, table41Data, table41Headers, additionalClauses);
-                } else {
-                  alert('Por favor, preencha todos os campos obrigatórios corretamente.');
-                }
-              }}
+              onClick={() => handleDownloadAttempt('pdf')}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors focus:ring-4 focus:ring-emerald-200"
             >
               <Download className="w-5 h-5" />
               Gerar Contrato em PDF
             </button>
             <button
-              onClick={() => {
-                if (validateForm()) {
-                  generateWord(formData, table41Data, table41Headers, additionalClauses);
-                } else {
-                  alert('Por favor, preencha todos os campos obrigatórios corretamente.');
-                }
-              }}
+              onClick={() => handleDownloadAttempt('word')}
               className="flex-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors focus:ring-4 focus:ring-slate-100"
             >
               <FileDown className="w-5 h-5" />
@@ -1181,7 +1281,7 @@ export default function App() {
 
       {/* Preview Column */}
       {showPreview && (
-          <div className="hidden lg:block sticky top-8 h-[calc(100vh-4rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col transition-all duration-300">
+          <div ref={previewRef} className="lg:sticky lg:top-8 h-[calc(100vh-4rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col transition-all duration-300">
             <div className="bg-slate-100 dark:bg-slate-800 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <Eye className="w-4 h-4 text-emerald-500" />
@@ -1351,6 +1451,66 @@ export default function App() {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Validation Modal */}
+      <AnimatePresence>
+        {showValidationModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowValidationModal(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl z-[70] overflow-hidden"
+            >
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                  <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Campos não preenchidos</h3>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                  Os seguintes campos estão vazios ou incorretos. Deseja preenchê-los agora ou baixar o contrato assim mesmo?
+                </p>
+                
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700 max-h-48 overflow-y-auto">
+                  <ul className="space-y-2">
+                    {missingFields.map((field, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        {field}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-2">
+                  <button
+                    onClick={() => setShowValidationModal(false)}
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-200 dark:shadow-none"
+                  >
+                    Sim, quero preencher o que falta
+                  </button>
+                  <button
+                    onClick={proceedWithDownload}
+                    className="w-full py-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                  >
+                    Não, baixar assim mesmo
+                  </button>
                 </div>
               </div>
             </motion.div>
