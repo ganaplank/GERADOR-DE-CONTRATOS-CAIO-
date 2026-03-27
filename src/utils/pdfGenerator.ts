@@ -11,8 +11,9 @@ if (typeof pdfMakeInstance.addVirtualFileSystem === 'function') {
   pdfMakeInstance.vfs = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs || pdfFonts;
 }
 
-export const generatePDF = (formData: any, table41Data: any[], table41Headers: any, additionalClauses: { id: string; title: string; text: string }[] = []) => {
-  const docDefinition = {
+export const generatePDF = (formData: any, table41Data: any[], table41Headers: any, additionalClauses: { id: string; title: string; text: string }[] = []): Promise<{ base64: string, fileName: string }> => {
+  return new Promise((resolve, reject) => {
+    const docDefinition = {
     pageSize: 'A4',
     pageMargins: [40, 90, 40, 60],
     header: function() {
@@ -276,9 +277,14 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
     }
   };
   
-  const fileName = formData.nomeCondominio
-    ? `Contrato_${formData.nomeCondominio.replace(/\s+/g, '_')}.pdf`
-    : 'Contrato_Sell_Administradora.pdf';
+    const fileName = formData.nomeCondominio
+      ? `Contrato_${formData.nomeCondominio.replace(/\s+/g, '_')}.pdf`
+      : 'Contrato_Sell_Administradora.pdf';
+      
+    const pdfDocGenerator = pdfMakeInstance.createPdf(docDefinition as any);
     
-  pdfMakeInstance.createPdf(docDefinition as any).download(fileName);
+    pdfDocGenerator.getBase64((data: string) => {
+      resolve({ base64: data, fileName });
+    });
+  });
 };

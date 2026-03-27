@@ -3,7 +3,7 @@ import {
   FileText, Download, Building2, User, Calendar, FileDown, 
   Upload, Search, ChevronDown, GripVertical, X, Plus,
   Moon, Sun, Save, FileUp, Eye, CheckCircle2, AlertCircle,
-  Menu
+  Menu, Trash2
 } from 'lucide-react';
 import { generatePDF } from './utils/pdfGenerator';
 import { generateWord } from './utils/wordGenerator';
@@ -55,6 +55,61 @@ const validateCNPJ = (cnpj: string) => {
   if (result !== parseInt(digits.charAt(1))) return false;
   return true;
 };
+
+const INITIAL_TABLE_41_DATA = [
+  { servico: 'Participação em Assembleia (Período de 3 horas / Hora adicional)', tipo: 'ultima', valor: '950,00 / 220,00' },
+  { servico: 'Apoio de Assistente / Locação de equipamentos de projeção', tipo: 'ultima', valor: '15% do valor / Reembolso de Despesas' },
+  { servico: 'Outros Custos Eletrônica (Operador até 100 Logins/+100 / Uso de Plataforma)', tipo: 'ultima', valor: '280,00 / 545,00 / 270,00' },
+  { servico: 'Assessoria em Reuniões do Corpo Diretivo Fora de Horario Comercial (período de 3 horas / Hora adicional)', tipo: 'ultima', valor: '500,00 / 120,00' },
+  { servico: 'Participação em Assembléias Extraordinárias', tipo: 'ultima', valor: 'R$ 650,00 por evento' },
+  { servico: 'Participação em Assembleias Extraordinárias (final de semana)', tipo: 'ultima', valor: 'R$ 900,00 por evento' },
+  { servico: 'Participação em Reuniões fora do expediente', tipo: 'ultima', valor: 'R$ 400,00 por evento' },
+  { servico: 'Representação em Audiências Judiciais, como Preposto', tipo: 'ultima', valor: 'R$ 870,00' },
+  { servico: 'Homologação e rescisão de funcionários', tipo: 'ultima', valor: 'R$ 370,00' },
+  { servico: 'Hospedagem, gerenciamento e manutenção de dados na Internet', tipo: 'ultima', valor: 'R$ 162,00' },
+  { servico: 'Certidão do Registro de Imóveis', tipo: 'ultima', valor: 'R$ 195,00' },
+  { servico: 'Despesas com viagens e conduções, gestão de arquivos, custódia, etc.', tipo: 'ultima', valor: 'Reembolso de Despesas' },
+  { servico: 'Preparação e Assessoria no desmembramento do IPTU', tipo: 'ultima', valor: 'Repasse do custo' },
+  { servico: 'Serviços de cópia e correios', tipo: 'ultima', valor: 'Somente repasse de custo' },
+  { servico: 'Ficha criminal', tipo: 'ultima', valor: 'Somente repasse de custo' },
+  { servico: 'Material de expediente', tipo: 'ultima', valor: 'Tarifas unificadas' },
+  { servico: 'Cadastramento SABESP, Inscrição INSS/SRF/FGTS/Prefeitura, Certificação Digital', tipo: 'ultima', valor: 'R$ 930,00' },
+  { servico: 'Atualização junto ao DET e Gestão do E-consignado mensal', tipo: 'ultima', valor: 'R$ 465,00' },
+  { servico: 'Diligências junto a concessionárias / órgãos públicos (presencial ou digital)', tipo: 'ultima', valor: '450,00 + custos' },
+  { servico: 'Protesto de cotas condominiais', tipo: 'ultima', valor: 'R$ 230,00' },
+  { servico: 'Regularização ou Parcelamento (INSS/FGTS/Prefeitura/Concessionárias)', tipo: 'ultima', valor: 'A combinar' },
+  { servico: 'Gestão de Créditos de Notas Fiscais Eletrônicas', tipo: 'ultima', valor: '10% do valor' },
+  { servico: 'Gestão eSocial / Reinf mensal (Por CNPJ)', tipo: 'ultima', valor: 'R$ 192,00' },
+  { servico: 'Gestão eSocial mensal (Por CPF / Funcionários e prestadores)', tipo: 'ultima', valor: 'R$ 40,00' },
+  { servico: 'Elaboração e entrega anual da DIRF/SRF', tipo: 'ultima', valor: 'R$ 900,00' },
+  { servico: 'Entrega anual de Informe de Rendimentos', tipo: 'ultima', valor: 'R$ 70,00' },
+  { servico: 'Consulta e Acompanhamento Anual ao FAP', tipo: 'ultima', valor: 'R$ 280,00' },
+  { servico: 'Controle de NFTS (Opção 1: Envio/Controle mensal)', tipo: 'ultima', valor: 'R$ 1.090,00' },
+  { servico: 'Controle de NFTS (Opção 2: Envio, controle e cobrança mensal)', tipo: 'ultima', valor: 'R$ 130,60' },
+  { servico: 'Retenções de Tributos de Pagamentos (Opção 1: Por faixas de retenção)', tipo: 'ultima', valor: 'De 220,00 a 470,00' },
+  { servico: 'Retenções de Tributos de Pagamentos (Opção 2: Por retenção/cada)', tipo: 'ultima', valor: 'R$ 31,70' },
+  { servico: 'Assessoria LGPD: Termo Aditivo', tipo: 'ultima', valor: 'R$ 34,00' },
+  { servico: 'Assessoria LGPD: Política de Privacidade', tipo: 'ultima', valor: 'R$ 425,00' },
+  { servico: 'Assessoria LGPD: Adequação de cláusulas', tipo: 'ultima', valor: 'R$ 235,00' },
+  { servico: 'Malote Digital', tipo: 'ultima', valor: 'ISENTO (SEMPRE)' },
+  { servico: 'Pasta Digitalizada', tipo: 'ultima', valor: 'ISENTO (SEMPRE)' },
+  { servico: 'Conta Bancaria (Banco Homologado)', tipo: 'ultima', valor: 'REPASSE DE TARIFAS E TAXAS' },
+  { servico: 'Elaboração e registro de Atas de Assembleias / Despesas de Cartório', tipo: 'ultima', valor: '450,00 / Reembolso de Despesas' },
+  { servico: 'Elaboração e registro de Atas de Reunião de Corpo Diretivo / Despesas de Cartório', tipo: 'ultima', valor: '250,00 / Reembolso de Despesas' },
+  { servico: 'Participação em Assembleia de Instalação de Condomínio (Período de 4 horas / Hora adicional)', tipo: 'ultima', valor: '1.500,00 / 250,00' },
+  { servico: 'Elaboração e registro de Atas de Assembleias de Instalação / Despesas de Cartório', tipo: 'ultima', valor: '650,00 / Reembolso de Despesas' },
+  { servico: 'Abertura de CNPJ / Despesas de Cartório e Receita Federal', tipo: 'ultima', valor: '650,00 / Reembolso de Despesas' },
+  { servico: 'Obtenção de Certificado Digital / Despesas de Certificadora', tipo: 'ultima', valor: '250,00 / Reembolso de Despesas' },
+  { servico: 'Emissão de boletos bancários (por unidade)', tipo: 'ultima', valor: '3,50' },
+  { servico: 'Emissão de boletos bancários de acordos (por unidade)', tipo: 'ultima', valor: '5,50' },
+  { servico: 'Emissão de boletos bancários de taxa extra (por unidade)', tipo: 'ultima', valor: '3,50' },
+  { servico: 'Emissão de boletos bancários de taxa de mudança (por unidade)', tipo: 'ultima', valor: '3,50' },
+  { servico: 'Emissão de boletos bancários de taxa de reserva de espaço (por unidade)', tipo: 'ultima', valor: '3,50' },
+  { servico: 'Emissão de boletos bancários de taxa de consumo (por unidade)', tipo: 'ultima', valor: '3,50' },
+  { servico: 'Emissão de boletos bancários de taxa de multa (por unidade)', tipo: 'ultima', valor: '3,50' },
+  { servico: 'Emissão de boletos bancários de taxa de advertência (por unidade)', tipo: 'ultima', valor: '3,50' },
+  { servico: 'Emissão de boletos bancários de taxa de juros (por unidade)', tipo: 'ultima', valor: '3,50' }
+];
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
@@ -175,45 +230,51 @@ export default function App() {
     setPendingDownloadType(null);
   };
 
-  const [table41Data, setTable41Data] = useState([
-    { servico: 'Participação em Assembleia (Período de 3 horas / Hora adicional)', tipo: 'ultima', valor: '950,00 / 220,00' },
-    { servico: 'Apoio de Assistente / Locação de equipamentos de projeção', tipo: 'ultima', valor: '15% do valor / Reembolso de Despesas' },
-    { servico: 'Outros Custos Eletrônica (Operador até 100 Logins/+100 / Uso de Plataforma)', tipo: 'ultima', valor: '280,00 / 545,00 / 270,00' },
-    { servico: 'Assessoria em Reuniões do Corpo Diretivo Fora de Horario Comercial (período de 3 horas / Hora adicional)', tipo: 'ultima', valor: '500,00 / 120,00' },
-    { servico: 'Participação em Assembléias Extraordinárias', tipo: 'ultima', valor: 'R$ 650,00 por evento' },
-    { servico: 'Participação em Assembleias Extraordinárias (final de semana)', tipo: 'ultima', valor: 'R$ 900,00 por evento' },
-    { servico: 'Participação em Reuniões fora do expediente', tipo: 'ultima', valor: 'R$ 400,00 por evento' },
-    { servico: 'Representação em Audiências Judiciais, como Preposto', tipo: 'ultima', valor: 'R$ 870,00' },
-    { servico: 'Homologação e rescisão de funcionários', tipo: 'ultima', valor: 'R$ 370,00' },
-    { servico: 'Hospedagem, gerenciamento e manutenção de dados na Internet', tipo: 'ultima', valor: 'R$ 162,00' },
-    { servico: 'Certidão do Registro de Imóveis', tipo: 'ultima', valor: 'R$ 195,00' },
-    { servico: 'Despesas com viagens e conduções, gestão de arquivos, custódia, etc.', tipo: 'ultima', valor: 'Reembolso de Despesas' },
-    { servico: 'Preparação e Assessoria no desmembramento do IPTU', tipo: 'ultima', valor: 'Repasse do custo' },
-    { servico: 'Serviços de cópia e correios', tipo: 'ultima', valor: 'Somente repasse de custo' },
-    { servico: 'Ficha criminal', tipo: 'ultima', valor: 'Somente repasse de custo' },
-    { servico: 'Material de expediente', tipo: 'ultima', valor: 'Tarifas unificadas' },
-    { servico: 'Cadastramento SABESP, Inscrição INSS/SRF/FGTS/Prefeitura, Certificação Digital', tipo: 'ultima', valor: 'R$ 930,00' },
-    { servico: 'Atualização junto ao DET e Gestão do E-consignado mensal', tipo: 'ultima', valor: 'R$ 465,00' },
-    { servico: 'Diligências junto a concessionárias / órgãos públicos (presencial ou digital)', tipo: 'ultima', valor: '450,00 + custos' },
-    { servico: 'Protesto de cotas condominiais', tipo: 'ultima', valor: 'R$ 230,00' },
-    { servico: 'Regularização ou Parcelamento (INSS/FGTS/Prefeitura/Concessionárias)', tipo: 'ultima', valor: 'A combinar' },
-    { servico: 'Gestão de Créditos de Notas Fiscais Eletrônicas', tipo: 'ultima', valor: '10% do valor' },
-    { servico: 'Gestão eSocial / Reinf mensal (Por CNPJ)', tipo: 'ultima', valor: 'R$ 192,00' },
-    { servico: 'Gestão eSocial mensal (Por CPF / Funcionários e prestadores)', tipo: 'ultima', valor: 'R$ 40,00' },
-    { servico: 'Elaboração e entrega anual da DIRF/SRF', tipo: 'ultima', valor: 'R$ 900,00' },
-    { servico: 'Entrega anual de Informe de Rendimentos', tipo: 'ultima', valor: 'R$ 70,00' },
-    { servico: 'Consulta e Acompanhamento Anual ao FAP', tipo: 'ultima', valor: 'R$ 280,00' },
-    { servico: 'Controle de NFTS (Opção 1: Envio/Controle mensal)', tipo: 'ultima', valor: 'R$ 1.090,00' },
-    { servico: 'Controle de NFTS (Opção 2: Envio, controle e cobrança mensal)', tipo: 'ultima', valor: 'R$ 130,60' },
-    { servico: 'Retenções de Tributos de Pagamentos (Opção 1: Por faixas de retenção)', tipo: 'ultima', valor: 'De 220,00 a 470,00' },
-    { servico: 'Retenções de Tributos de Pagamentos (Opção 2: Por retenção/cada)', tipo: 'ultima', valor: 'R$ 31,70' },
-    { servico: 'Assessoria LGPD: Termo Aditivo', tipo: 'ultima', valor: 'R$ 34,00' },
-    { servico: 'Assessoria LGPD: Política de Privacidade', tipo: 'ultima', valor: 'R$ 425,00' },
-    { servico: 'Assessoria LGPD: Adequação de cláusulas', tipo: 'ultima', valor: 'R$ 235,00' },
-    { servico: 'Malote Digital', tipo: 'ultima', valor: 'ISENTO (SEMPRE)' },
-    { servico: 'Pasta Digitalizada', tipo: 'ultima', valor: 'ISENTO (SEMPRE)' },
-    { servico: 'Conta Bancaria (Banco Homologado)', tipo: 'ultima', valor: 'REPASSE DE TARIFAS E TAXAS' }
-  ]);
+  const handleClearSection1 = () => {
+    setFormData(prev => ({
+      ...prev,
+      nomeCondominio: '',
+      cnpjCondominio: '',
+      enderecoCondominio: '',
+    }));
+  };
+
+  const handleClearSection2 = () => {
+    setFormData(prev => ({
+      ...prev,
+      nomeSindico: '',
+      cpfSindico: '',
+      representanteSindico: '',
+      telefoneSindico: '',
+      emailSindico: '',
+    }));
+  };
+
+  const handleClearSection3 = () => {
+    setFormData(prev => ({
+      ...prev,
+      dataBase: '',
+      valorPrestacao: '',
+      indiceReajuste: 'IPCA',
+      tipoPrazo: 'A) Padrão (12 meses)',
+      mesesOutroPrazo: '',
+      tipoAvisoPrevio: 'Padrão',
+      diasAvisoPrevio: '30 (trinta)',
+      diasCobrancaAdvocacia: '30',
+      tipoLgpd: 'Padrão',
+      tipoForo: 'Padrão',
+      cidadeForo: '',
+    }));
+  };
+
+  const handleClearAllSections = () => {
+    handleClearSection1();
+    handleClearSection2();
+    handleClearSection3();
+    setErrors({});
+  };
+
+  const [table41Data, setTable41Data] = useState(JSON.parse(JSON.stringify(INITIAL_TABLE_41_DATA)));
   const [table41Headers, setTable41Headers] = useState({ servico: 'Serviço', valor: 'Última Referência' });
   const [isTableVisible, setIsTableVisible] = useState(false);
   const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
@@ -622,8 +683,20 @@ export default function App() {
                 <h2 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                   1. Dados do Condomínio
+                  <button type="button" onClick={handleClearSection1} className="text-slate-400 hover:text-red-500 transition-colors ml-2" title="Limpar Dados do Condomínio">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </h2>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleClearAllSections}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 dark:border-red-800"
+                  title="Limpar Seções 1, 2 e 3"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Limpar Formulário</span>
+                </button>
                 <input
                   type="file"
                   accept=".xlsx, .xls, .csv"
@@ -760,9 +833,12 @@ export default function App() {
 
           {/* Dados do Síndico */}
           <section>
-            <h2 className="text-lg font-medium text-slate-900 mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-slate-500" />
+            <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <User className="w-5 h-5 text-slate-500 dark:text-slate-400" />
               2. Dados do Síndico(a)
+              <button type="button" onClick={handleClearSection2} className="text-slate-400 hover:text-red-500 transition-colors ml-2" title="Limpar Dados do Síndico">
+                <Trash2 className="w-4 h-4" />
+              </button>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
@@ -831,9 +907,12 @@ export default function App() {
 
           {/* Dados do Contrato */}
           <section>
-            <h2 className="text-lg font-medium text-slate-900 mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-slate-500" />
+            <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-slate-500 dark:text-slate-400" />
               3. Dados do Contrato
+              <button type="button" onClick={handleClearSection3} className="text-slate-400 hover:text-red-500 transition-colors ml-2" title="Limpar Dados do Contrato">
+                <Trash2 className="w-4 h-4" />
+              </button>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="space-y-1">
