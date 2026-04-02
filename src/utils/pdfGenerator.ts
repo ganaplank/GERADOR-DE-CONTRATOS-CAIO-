@@ -283,8 +283,7 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
       
     const pdfDocGenerator = pdfMakeInstance.createPdf(docDefinition as any);
     
-    pdfDocGenerator.getBase64((data: string) => {
-      resolve({ base64: data, fileName });
-    });
+    pdfDocGenerator.download(fileName);
+    resolve({ base64: '', fileName });
   });
 };
