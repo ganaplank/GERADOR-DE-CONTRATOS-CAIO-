@@ -9,12 +9,19 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
   
   const createBoxedText = (text: string) => new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: {
+      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    },
     rows: [
       new TableRow({
         children: [
           new TableCell({
-            children: [new Paragraph({ children: [new TextRun({ text, bold: true })] })],
-            margins: { top: 100, bottom: 100, left: 100, right: 100 }
+            children: [new Paragraph({ children: [new TextRun({ text, bold: true, color: "FFFFFF" })] })],
+            margins: { top: 100, bottom: 100, left: 100, right: 100 },
+            shading: { fill: "001f3f" }
           })
         ]
       })
@@ -158,34 +165,40 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
           ],
         }),
       },
-      children: [
-        new Paragraph({ children: [new TextRun({ text: "CONTRATO DE PRESTAÇÃO DE SERVIÇOS - QUADRO RESUMO", bold: true })], alignment: AlignmentType.CENTER }),
-        new Paragraph({ children: [new TextRun({ text: "ADMINISTRAÇÃO DE CONDOMÍNIOS/ASSOCIAÇÕES E OUTRAS AVENÇAS", bold: true })], alignment: AlignmentType.CENTER }),
+      children: [        new Paragraph({ children: [new TextRun({ text: "CONTRATO DE PRESTAÇÃO DE SERVIÇOS - QUADRO RESUMO", bold: true, size: 28, color: "001f3f" })], alignment: AlignmentType.CENTER }),
+        new Paragraph({ children: [new TextRun({ text: "ADMINISTRAÇÃO DE CONDOMÍNIOS/ASSOCIAÇÕES E OUTRAS AVENÇAS", bold: true, size: 28, color: "001f3f" })], alignment: AlignmentType.CENTER }),
         new Paragraph({ text: "" }),
         
-        createBoldParagraph("A partir de agora denominado como CONDOMÍNIO:"),
+        new Paragraph({ children: [new TextRun({ text: "A partir de agora denominado como CONDOMÍNIO:", bold: true, color: "001f3f" })] }),
         new Table({
           width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.SINGLE, size: 12, color: "2b82c9" },
+            bottom: { style: BorderStyle.SINGLE, size: 12, color: "2b82c9" },
+            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          },
           rows: [
             new TableRow({
               children: [
                 new TableCell({
                   children: [
-                    new Paragraph({ children: [new TextRun({ text: `${formData.nomeCondominio ? `CONDOMÍNIO ${formData.nomeCondominio.toUpperCase()}` : 'CONDOMÍNIO'} – CNPJ/MF: ${formData.cnpjCondominio || '____________________'}`, bold: true })] }),
+                    new Paragraph({ children: [new TextRun({ text: `${formData.nomeCondominio ? `CONDOMÍNIO ${formData.nomeCondominio.toUpperCase()}` : 'CONDOMÍNIO'} – CNPJ/MF: ${formData.cnpjCondominio || '____________________'}`, bold: true, color: "001f3f" })] }),
                     new Paragraph({ children: [new TextRun({ text: `Endereço: `, bold: true }), new TextRun({ text: `${formData.enderecoCondominio || '____________________________________________________'}` })] }),
                     new Paragraph({ children: [
                       new TextRun({ text: `Representada Síndico (a): `, bold: true }), 
                       new TextRun({ text: `${formData.nomeSindico || '____________________'} ` }), 
                       new TextRun({ text: `– CPF/CNPJ: `, bold: true }), 
                       new TextRun({ text: `${formData.cpfSindico || '____________________'}` }),
-                      ...(formData.cpfSindico.replace(/\\D/g, '').length > 11 ? [
+                      ...(formData.cpfSindico.replace(/\D/g, '').length > 11 ? [
                         new TextRun({ text: ` – Representante: `, bold: true }),
                         new TextRun({ text: `${formData.representanteSindico || '____________________'}` })
                       ] : [])
                     ] }),
                     new Paragraph({ children: [new TextRun({ text: `Telefone: `, bold: true }), new TextRun({ text: `${formData.telefoneSindico || '____________________'} ` }), new TextRun({ text: `E-mail: `, bold: true }), new TextRun({ text: `${formData.emailSindico || '____________________'}` })] }),
                   ],
-                  margins: { top: 100, bottom: 100, left: 100, right: 100 }
+                  margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                  shading: { fill: "f8fafc" }
                 })
               ]
             })
@@ -193,20 +206,27 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
         }),
         new Paragraph({ text: "" }),
 
-        createBoldParagraph("A partir de agora denominada como ADMINISTRADORA:"),
+        new Paragraph({ children: [new TextRun({ text: "A partir de agora denominada como ADMINISTRADORA:", bold: true, color: "001f3f" })] }),
         new Table({
           width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.SINGLE, size: 12, color: "2b82c9" },
+            bottom: { style: BorderStyle.SINGLE, size: 12, color: "2b82c9" },
+            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          },
           rows: [
             new TableRow({
               children: [
                 new TableCell({
                   children: [
-                    new Paragraph({ children: [new TextRun({ text: "SELL ADMINISTRADORA DE CONDOMÍNIOS LTDA - CNPJ: 14.804.150/0001-62", bold: true })] }),
+                    new Paragraph({ children: [new TextRun({ text: "SELL ADMINISTRADORA DE CONDOMÍNIOS LTDA - CNPJ: 14.804.150/0001-62", bold: true, color: "001f3f" })] }),
                     new Paragraph({ children: [new TextRun({ text: "Endereço: ", bold: true }), new TextRun({ text: "Av. Pompéia, 723, São Paulo/SP, 05023-000" })] }),
                     new Paragraph({ children: [new TextRun({ text: "Representada por seu sócio: ", bold: true }), new TextRun({ text: "Roberto Silva, inscrito no CPF 940.314.958-20" })] }),
                     new Paragraph({ children: [new TextRun({ text: "Telefone: ", bold: true }), new TextRun({ text: "(11) 3796-0203 - " }), new TextRun({ text: "E-mail: ", bold: true }), new TextRun({ text: "atendimento@selladm.com.br" })] }),
                   ],
-                  margins: { top: 100, bottom: 100, left: 100, right: 100 }
+                  margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                  shading: { fill: "f8fafc" }
                 })
               ]
             })
@@ -214,9 +234,15 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
         }),
         new Paragraph({ text: "" }),
 
-        createBoldParagraph("PRAZOS E VALORES:"),
+        new Paragraph({ children: [new TextRun({ text: "PRAZOS E VALORES:", bold: true, color: "001f3f" })] }),
         new Table({
           width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.SINGLE, size: 12, color: "2b82c9" },
+            bottom: { style: BorderStyle.SINGLE, size: 12, color: "2b82c9" },
+            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          },
           rows: [
             new TableRow({
               children: [
@@ -227,7 +253,8 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
                     new Paragraph({ children: [new TextRun({ text: "Data de pagamento: ", bold: true }), new TextRun({ text: "Até o dia 10 do mês da prestação de serviços" })] }),
                     new Paragraph({ children: [new TextRun({ text: "Valor da Prestação de serviço: ", bold: true }), new TextRun({ text: `${formData.valorPrestacao || 'R$ ___________'}` })] }),
                   ],
-                  margins: { top: 100, bottom: 100, left: 100, right: 100 }
+                  margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                  shading: { fill: "f8fafc" }
                 })
               ]
             })
@@ -235,7 +262,7 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
         }),
         new Paragraph({ text: "" }),
 
-        createParagraph("Pelo presente instrumento, as partes acima qualificadas têm entre si justo e contratado as seguintes cláusulas:"),
+        new Paragraph({ text: "Pelo presente instrumento, as partes acima qualificadas têm entre si justo e contratado as seguintes cláusulas:", alignment: AlignmentType.JUSTIFIED, pageBreakBefore: true }),
         new Paragraph({ text: "" }),
 
         createBoxedText("CLÁUSULA 1 – DO OBJETO, VALOR, PAGAMENTO E REAJUSTE"),
@@ -307,62 +334,86 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
         createBoxedText("CLÁUSULA 4 – DAS DISPOSIÇÕES GERAIS."),
         new Paragraph({ text: "" }),
 
-        createParagraph("4.1. A título de reembolso, serão repassados ao CONDOMINIO todos os custos e despesas relacionadas com correio, cópias, impressões, envelopes, material de escritório, tarifas/taxas bancárias, e outras despesas decorrentes de atos praticados pela ADMINISTRADORA em benefício ao CONDOMINIO. Somado a isso, os demais itens previstos no Referencial de Serviços Especiais descritos abaixo, quando efetivados, serão pagos à ADMINISTRADORA, conforme segue:"),
-        new Paragraph({ text: "" }),
+        new Paragraph({ text: "4.1. A título de reembolso, serão repassados ao CONDOMINIO todos os custos e despesas relacionadas com correio, cópias, impressões, envelopes, material de escritório, tarifas/taxas bancárias, e outras despesas decorrentes de atos praticados pela ADMINISTRADORA em benefício ao CONDOMINIO. Somado a isso, os demais itens previstos no Referencial de Serviços Especiais descritos abaixo, quando efetivados, serão pagos à ADMINISTRADORA, conforme segue:", alignment: AlignmentType.JUSTIFIED }),
+        new Paragraph({ text: "", pageBreakBefore: true }),
 
         new Table({
           width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.SINGLE, size: 6, color: "e2e8f0" },
+            bottom: { style: BorderStyle.SINGLE, size: 6, color: "e2e8f0" },
+            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            insideHorizontal: { style: BorderStyle.SINGLE, size: 6, color: "e2e8f0" },
+            insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          },
           rows: [
             new TableRow({
               children: [
-                new TableCell({ children: [createBoldParagraph(table41Headers.servico)], margins: { top: 50, bottom: 50, left: 50, right: 50 } }),
-                new TableCell({ children: [createBoldParagraph(table41Headers.valor)], margins: { top: 50, bottom: 50, left: 50, right: 50 } }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: table41Headers.servico, bold: true, color: "FFFFFF" })] })], margins: { top: 100, bottom: 100, left: 100, right: 100 }, shading: { fill: "2b82c9" } }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: table41Headers.valor, bold: true, color: "FFFFFF" })] })], margins: { top: 100, bottom: 100, left: 100, right: 100 }, shading: { fill: "2b82c9" } }),
               ]
             }),
-            ...table41Data.map(row => 
+            ...table41Data.map((row, index) => 
               new TableRow({ 
                 children: [
-                  new TableCell({ children: [new Paragraph(row.servico)], margins: { top: 50, bottom: 50, left: 50, right: 50 } }), 
-                  new TableCell({ children: [new Paragraph(row.tipo === 'valor' ? row.valor : (row.tipo === 'isento' ? 'ISENTO' : row.valor))], margins: { top: 50, bottom: 50, left: 50, right: 50 } })
+                  new TableCell({ children: [new Paragraph(row.servico)], margins: { top: 100, bottom: 100, left: 100, right: 100 }, shading: { fill: index % 2 === 0 ? "f4f9fd" : "ffffff" } }), 
+                  new TableCell({ children: [new Paragraph(row.tipo === 'valor' ? row.valor : (row.tipo === 'isento' ? 'ISENTO' : row.valor))], margins: { top: 100, bottom: 100, left: 100, right: 100 }, shading: { fill: index % 2 === 0 ? "f4f9fd" : "ffffff" } })
                 ] 
               })
             )
           ]
         }),
         new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
 
         createParagraph("4.1.1. Serão repassadas mediante reembolso as eventuais despesas de aluguéis de máquinas, contratação de operadores, telões etc., que demandarem despesas, e que vierem a serem solicitadas pelo CONDOMÍNIO, de modo que, não faça parte do escopo ou quadro de materiais que a ADMINISTRADORA possua para a prestação de serviços."),
         new Paragraph({ text: "" }),
-        createParagraph("4.1.2. Fica claro nesta oportunidade, que os valores previstos nesta tabela referencial, ficarão sujeitos ao reajuste pelo índice econômico escolhido no quadro de resumo do preambulo."),
+        new Paragraph({ text: "" }),
+        createParagraph("4.1.2. Os serviços especiais previstos na Cláusula 4.1, quando efetivamente prestados, terão seus valores reajustados no mês de janeiro de cada ano, com base no índice econômico indicado no quadro resumo deste contrato, aplicando-se a variação acumulada do referido índice no período."),
+        new Paragraph({ text: "" }),
         new Paragraph({ text: "" }),
         ...(formData.tipoLgpd === 'Completa' ? [
           createParagraph('4.2. - Considerando o tratamento de dados pessoais realizado pela ADMINISTRADORA, seus funcionários, representantes, contratados, subcontratados ou outros, em nome e a mando do CONDOMINIO, a ADMINISTRADORA deve garantir que qualquer terceiro envolvido no tratamento em seu nome, em razão disto, cumprirá integralmente aquilo definido pela Lei Geral de Proteção de Dados (“LGPD” - Lei nº 13.709/18). A ADMINISTRADORA deverá observar as diretrizes da legislação aplicável a matérias relacionadas à proteção de dados pessoais e privacidade, principalmente no que se refere ao tratamento de informações pessoais relacionados ao objeto da contratação do presente, inclusive nas seguintes condições:'),
           new Paragraph({ text: "" }),
+          new Paragraph({ text: "" }),
           createParagraph('4.2.1. A ADMINISTRADORA assegura que os dados pessoais e/ou sensíveis tratados em decorrência deste contrato não serão acessados, compartilhados ou transferidos a terceiros sem a autorização prévia e por escrito do CONDOMINIO. Caso o CONDOMINIO autorize estas operações de tratamento, a ADMINISTRADORA deverá garantir que tais terceiros se obriguem, por escrito, a assegurar a mesma proteção aos dados pessoais estabelecida neste contrato. A ADMINISTRADORA será responsável por todas as ações e omissões realizadas por tais terceiros relativas ao tratamento dos referidos dados pessoais, que tiver realizado.'),
+          new Paragraph({ text: "" }),
           new Paragraph({ text: "" }),
           createParagraph('4.2.2. Caso o ADMINISTRADORA identificar a ocorrência de um incidente de segurança, deverá notificar o CONDOMINIO em até 48h (quarenta e oito horas), por escrito. A notificação deverá conter informações detalhadas contendo, no mínimo, a descrição do ocorrido e de sua causa, a natureza dos dados afetados, informações sobre os titulares envolvidos, quais os riscos relacionados e os possíveis impactos aos titulares, as ações adotadas para a prevenção e as medidas técnicas e administrativas para a mitigação dos efeitos e dos prejuízos, para que a ADMINISTRADORA possa cumprir com eventuais exigências legais.'),
           new Paragraph({ text: "" }),
+          new Paragraph({ text: "" }),
           createParagraph('4.2.3. A ADMINISTRADORA deverá, sob o comando do CONDOMINIO, ou quando da extinção do vínculo contratual e obrigacional existente, devolver integralmente os dados pessoais e excluí-los definitiva e permanentemente, salvo se aplicáveis obrigações legais ou regulatórias que determinem a continuidade do seu armazenamento, dentro do prazo legal estabelecido.'),
+          new Paragraph({ text: "" }),
           new Paragraph({ text: "" }),
           createParagraph('4.2.4. A ADMINISTRADORA será responsável por quaisquer reclamações, perdas e danos, que venha a sofrer o CONDOMINIO, além de multas, inclusive as aplicadas pelas autoridades competentes, e qualquer outra situação que exija o pagamento de valores pecuniários ou acarrete prejuízos, quando os eventos decorrerem de: a-) descumprimento, pela ADMINISTRADORA, ou por terceiros por ela contratados, das disposições expostas neste instrumento; b-) qualquer incidente relacionado aos dados pessoais tratados pela ADMINISTRADORA ou de terceiros por ela contratados, referentes a este contrato, ou c-) qualquer ato da ADMINISTRADORA ou de terceiros por ela contratados, em discordância com a legislação aplicável à privacidade e proteção de dados.'),
           new Paragraph({ text: "" }),
+          new Paragraph({ text: "" }),
           createParagraph('4.2.5. A ADMINISTRADORA não deverá realizar quaisquer ações proibidas pela Lei Federal nº 12.846/2013, Lei Federal nº 9.613/1998, e as demais normas aplicáveis que tratem das práticas de atos contra a administração pública, corrupção, lavagem de dinheiro, evasão fiscal, improbidade administrativa, financiamento ao terrorismo, bem como outras normas relacionadas (“Leis Anticorrupção”). Ademais, a ADMINISTRADORA não deve fazer pagamentos, oferecer ou transferir quaisquer bens ou direitos, bem como influenciar indevidamente qualquer servidor, funcionário ou empregado da administração pública direta ou indireta, qualquer membro de um partido político, ou candidato a um cargo político, ainda, qualquer terceiro em desconformidade com as Leis Anticorrupção ou a título de compliance.'),
+          new Paragraph({ text: "" }),
           new Paragraph({ text: "" }),
           createParagraph('4.2.6. A ADMINISTRADORA declaram e garantem que em todas as suas atividades relacionadas ao Contrato bem como em todas as suas atividades em geral e naquelas relacionadas ao seu grupo econômico, bem como seus respectivos diretores, conselheiros, administradores, colaboradores, funcionários, empregados ou beneficiários, consultores ou outros prepostos não tomaram ou tomarão qualquer medida que viole as Leis Anticorrupção e não pagaram, ofereceram, prometeram ou autorizaram, nem pagarão, oferecerão, prometerão, ou autorizarão o pagamento de dinheiro, bens ou direitos, direta ou indiretamente, a qualquer servidor, funcionário ou empregado da administração pública direta ou indireta, em qualquer caso com a finalidade de: influenciar qualquer ato ou decisão de tal pessoa em sua capacidade oficial; induzir tal pessoa a agir (seja por ação ou omissão) em violação de seu dever legal; obter qualquer vantagem indevida; ou induzir tal pessoa a usar a sua influência para afetar ou influenciar qualquer ato ou decisão de uma autoridade competente a título de compliance.'),
           new Paragraph({ text: "" }),
+          new Paragraph({ text: "" }),
           createParagraph('4.2.7. O não cumprimento pelas Pastes das Leis Anticorrupção a de compliance será considerada uma infração grave ao Contrato e conferirá à Parte inocente o direito de rescindir imediatamente o Contrato, assumindo a Parte infratora a exclusiva responsabilidade pelas perdas e danos decorrentes de tal infração, em conformidade com as normas aplicáveis.'),
+          new Paragraph({ text: "" }),
           new Paragraph({ text: "" })
         ] : [
           createParagraph('4.2. As partes, por si próprias, os seus empregados e residentes, comprometem-se a agir neste contrato de acordo com a atual Legislação sobre Proteção de Dados Pessoais (LGPD) e as decisões dos órgãos reguladores e de supervisão sobre o assunto, especialmente a Lei 13.709/2018. Além disso, a PARTE CONTRATANTE declara que detém todas as autorizações, licenças, permissões, concessões, consentimentos, direitos e/ou garantias legalmente necessários ("Autorizações de Tratamento") para o propósito de autorizar o tratamento dos Dados Pessoais por si fornecidos e de acordo com as suas diretrizes, declarando também que tais Dados Pessoais foram obtidos legalmente, em estrita conformidade com todas as leis aplicáveis.'),
+          new Paragraph({ text: "" }),
           new Paragraph({ text: "" })
         ]),
         createParagraph("4.3. O presente contrato e prestação de serviços não estabelecerá qualquer relação ou vínculo empregatício entre o CONDOMÍNIO e os empregados da ADMINISTRADORA, respondendo a mesma com exclusividade pelas eventuais reclamações trabalhistas ajuizadas por seus funcionários ou profissionais envolvidos na prestação dos serviços."),
         new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
         createParagraph("4.4. As partes declaram expressamente substituídos todos os instrumentos ou acordos anteriormente celebrados, que possuam o mesmo objeto do presente contrato, de modo que a nova relação jurídico-comercial (condições, procedimentos, valores etc.), decorrente dos instrumentos antigos, passa a ser regida pelo disposto no presente instrumento a contar da data de início da vigência deste contrato."),
+        new Paragraph({ text: "" }),
         new Paragraph({ text: "" }),
         createParagraph("4.5. Fica expressa e irrevogavelmente estabelecido que a tolerância ou o não exercício pelas partes, de direitos garantidos em lei ou por este contrato, não significará renúncia ou novação, podendo as partes exercê-los a qualquer momento."),
         new Paragraph({ text: "" }),
+        new Paragraph({ text: "" }),
         createParagraph(`4.6. As partes elegem o foro da cidade de ${formData.tipoForo === 'Personalizado' && formData.cidadeForo ? formData.cidadeForo : 'São Paulo'}, Estado de São Paulo, para dirimir quaisquer questões provenientes deste instrumento, renunciando a qualquer outro, por mais privilegiado que seja.`),
+        new Paragraph({ text: "" }),
         new Paragraph({ text: "" }),
         
         ...(additionalClauses.length > 0 ? [
@@ -376,22 +427,13 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
               ],
               alignment: AlignmentType.JUSTIFIED
             }),
+            new Paragraph({ text: "" }),
             new Paragraph({ text: "" })
           ])
         ] : []),
 
         createParagraph("4.7. As PARTES declaram que estarem justos e contratados, assinam o presente Instrumento Particular de Contrato de Prestação de Serviços por meio eletrônico, com o uso da plataforma Clicksign (i.e., https://www.clicksign.com/), nos termos da Medida Provisória nº 2.200-2/2001. As PARTES e os Intervenientes anuentes reconhecem como válidas as assinaturas realizadas inclusive com certificados não emitidos pela Infraestrutura de Chaves Públicas Brasileira (i.e., ICP-Brasil), nos termos do Artigo 10, Parágrafo 2º da Medida Provisória nº 2.200-2/2001, quando enviadas para os E-mails encaminhados neste Contrato. Este Contrato produz efeitos para todas as PARTES e para os Intervenientes Anuentes a partir da data indicada no QUADRO RESUMO, ainda que uma ou mais PARTES realizem a assinatura em data posterior, para que surtam seus legais e jurídicos efeitos."),
         new Paragraph({ text: "" }),
-        new Paragraph({ text: "" }),
-        new Paragraph({ text: "" }),
-
-        new Paragraph({ text: "____________________________________________________", alignment: AlignmentType.CENTER }),
-        new Paragraph({ text: formData.nomeCondominio || 'CONTRATANTE', alignment: AlignmentType.CENTER }),
-        new Paragraph({ text: "" }),
-        new Paragraph({ text: "" }),
-        new Paragraph({ text: "____________________________________________________", alignment: AlignmentType.CENTER }),
-        new Paragraph({ text: "Sell Administradora de Condomínios", alignment: AlignmentType.CENTER }),
-        new Paragraph({ text: "CONTRATADA", alignment: AlignmentType.CENTER }),
       ],
     }]
   });

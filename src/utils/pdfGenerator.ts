@@ -30,7 +30,7 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
             bold: true,
             alignment: 'right',
             margin: [0, 35, 40, 0],
-            fontSize: 10
+            fontSize: 12
           }
         ]
       };
@@ -72,8 +72,8 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
       };
     },
     content: [
-      { text: 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS - QUADRO RESUMO', style: 'header' },
-      { text: 'ADMINISTRAÇÃO DE CONDOMÍNIOS/ASSOCIAÇÕES E OUTRAS AVENÇAS\n\n', style: 'header' },
+      { text: 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS - QUADRO RESUMO', style: 'header', fontSize: 16, color: '#001f3f' },
+      { text: 'ADMINISTRAÇÃO DE CONDOMÍNIOS/ASSOCIAÇÕES E OUTRAS AVENÇAS\n\n', style: 'header', fontSize: 14, color: '#2b82c9' },
       
       { text: 'A partir de agora denominado como CONDOMÍNIO:', style: 'boldText' },
       {
@@ -84,17 +84,24 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
             [
               {
                 text: [
-                  { text: `${formData.nomeCondominio ? `CONDOMÍNIO ${formData.nomeCondominio.toUpperCase()}` : 'CONDOMÍNIO'} – CNPJ/MF: ${formData.cnpjCondominio || '____________________'}\n`, bold: true },
+                  { text: `${formData.nomeCondominio ? `CONDOMÍNIO ${formData.nomeCondominio.toUpperCase()}` : 'CONDOMÍNIO'} – CNPJ/MF: ${formData.cnpjCondominio || '____________________'}\n`, bold: true, fontSize: 11, color: '#001f3f' },
                   { text: `Endereço: `, bold: true }, `${formData.enderecoCondominio || '____________________________________________________'}\n`,
                   { text: `Representada Síndico (a): `, bold: true }, `${formData.nomeSindico || '____________________'} `, { text: `– CPF/CNPJ: `, bold: true }, `${formData.cpfSindico || '____________________'}`,
-                  ...(formData.cpfSindico.replace(/\\D/g, '').length > 11 ? [{ text: ` – Representante: `, bold: true }, `${formData.representanteSindico || '____________________'}`] : []),
+                  ...(formData.cpfSindico.replace(/\D/g, '').length > 11 ? [{ text: ` – Representante: `, bold: true }, `${formData.representanteSindico || '____________________'}`] : []),
                   '\n',
                   { text: `Telefone: `, bold: true }, `${formData.telefoneSindico || '____________________'} `, { text: `E-mail: `, bold: true }, `${formData.emailSindico || '____________________'}`
                 ],
-                margin: [5, 5, 5, 5]
+                fillColor: '#f8fafc',
+                margin: [10, 10, 10, 10],
+                border: [false, true, false, true]
               }
             ]
           ]
+        },
+        layout: {
+          hLineWidth: function (i: number, node: any) { return i === 0 || i === node.table.body.length ? 2 : 1; },
+          vLineWidth: function (i: number, node: any) { return 0; },
+          hLineColor: function (i: number, node: any) { return '#2b82c9'; },
         }
       },
 
@@ -107,15 +114,22 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
             [
               {
                 text: [
-                  { text: 'SELL ADMINISTRADORA DE CONDOMÍNIOS LTDA - CNPJ: 14.804.150/0001-62\n', bold: true },
+                  { text: 'SELL ADMINISTRADORA DE CONDOMÍNIOS LTDA - CNPJ: 14.804.150/0001-62\n', bold: true, fontSize: 11, color: '#001f3f' },
                   { text: 'Endereço: ', bold: true }, 'Av. Pompéia, 723, São Paulo/SP, 05023-000\n',
                   { text: 'Representada por seu sócio: ', bold: true }, 'Roberto Silva, inscrito no CPF 940.314.958-20\n',
                   { text: 'Telefone: ', bold: true }, '(11) 3796-0203 - ', { text: 'E-mail: ', bold: true }, 'atendimento@selladm.com.br'
                 ],
-                margin: [5, 5, 5, 5]
+                fillColor: '#f8fafc',
+                margin: [10, 10, 10, 10],
+                border: [false, true, false, true]
               }
             ]
           ]
+        },
+        layout: {
+          hLineWidth: function (i: number, node: any) { return i === 0 || i === node.table.body.length ? 2 : 1; },
+          vLineWidth: function (i: number, node: any) { return 0; },
+          hLineColor: function (i: number, node: any) { return '#2b82c9'; },
         }
       },
 
@@ -133,23 +147,31 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
                   { text: 'Data de pagamento: ', bold: true }, 'Até o dia 10 do mês da prestação de serviços\n',
                   { text: 'Valor da Prestação de serviço: ', bold: true }, `${formData.valorPrestacao || 'R$ ___________'}`
                 ],
-                margin: [5, 5, 5, 5]
+                fillColor: '#f8fafc',
+                margin: [10, 10, 10, 10],
+                border: [false, true, false, true]
               }
             ]
           ]
+        },
+        layout: {
+          hLineWidth: function (i: number, node: any) { return i === 0 || i === node.table.body.length ? 2 : 1; },
+          vLineWidth: function (i: number, node: any) { return 0; },
+          hLineColor: function (i: number, node: any) { return '#2b82c9'; },
         }
       },
 
-      { text: '\nPelo presente instrumento, as partes acima qualificadas têm entre si justo e contratado as seguintes cláusulas:\n\n' },
+      { text: '\nPelo presente instrumento, as partes acima qualificadas têm entre si justo e contratado as seguintes cláusulas:\n\n', pageBreak: 'before' },
 
       {
         style: 'tableExample',
         table: {
           widths: ['*'],
           body: [
-            [{ text: 'CLÁUSULA 1 – DO OBJETO, VALOR, PAGAMENTO E REAJUSTE', bold: true, margin: [5, 5, 5, 5] }]
+            [{ text: 'CLÁUSULA 1 – DO OBJETO, VALOR, PAGAMENTO E REAJUSTE', style: 'clauseHeader', border: [false, false, false, false] }]
           ]
-        }
+        },
+        layout: 'noBorders'
       },
 
       { text: '\n1.1. Objeto - O objeto do presente contrato é a prestação de serviços especializados de administração de condomínio, associação e outras avenças, por parte da ADMINISTRADORA em favor do CONDOMÍNIO.\n\n' },
@@ -163,9 +185,10 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
         table: {
           widths: ['*'],
           body: [
-            [{ text: 'CLÁUSULA 2 – DO PRAZO, RESCISÃO CONTRATUAL E TRANSFERÊNCIA DA ADMINISTRAÇÃO', bold: true, margin: [5, 5, 5, 5] }]
+            [{ text: 'CLÁUSULA 2 – DO PRAZO, RESCISÃO CONTRATUAL E TRANSFERÊNCIA DA ADMINISTRAÇÃO', style: 'clauseHeader', border: [false, false, false, false] }]
           ]
-        }
+        },
+        layout: 'noBorders'
       },
 
       { text: `\n${formData.clausula21}\n\n` },
@@ -177,9 +200,10 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
         table: {
           widths: ['*'],
           body: [
-            [{ text: 'CLÁUSULA 3 – DOS SERVIÇOS PRESTADOS PELA ADMINISTRADORA', bold: true, margin: [5, 5, 5, 5] }]
+            [{ text: 'CLÁUSULA 3 – DOS SERVIÇOS PRESTADOS PELA ADMINISTRADORA', style: 'clauseHeader', border: [false, false, false, false] }]
           ]
-        }
+        },
+        layout: 'noBorders'
       },
 
       { text: '\n3.1. Cadastro de Condôminos - Mediante listagem que lhe for fornecida, providenciar a implantação de cadastro de condôminos, medida que permitirá as emissões de avisos-recibos, comunicados em geral e relatórios controles. As alterações subsequentes serão procedidas mediante a comunicação expressa do (a) Síndico (a), ou diretamente pelo próprio condômino, que fornecerá os dados necessários, ou então a comunicação do condômino ou possuidor adquirente da unidade, que exibirá o título de propriedade para as anotações devidas.\n\n' },
@@ -207,73 +231,78 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
         table: {
           widths: ['*'],
           body: [
-            [{ text: 'CLÁUSULA 4 – DAS DISPOSIÇÕES GERAIS.', bold: true, margin: [5, 5, 5, 5] }]
+            [{ text: 'CLÁUSULA 4 – DAS DISPOSIÇÕES GERAIS.', style: 'clauseHeader', border: [false, false, false, false] }]
           ]
-        }
+        },
+        layout: 'noBorders'
       },
 
       { text: '\n4.1. A título de reembolso, serão repassados ao CONDOMINIO todos os custos e despesas relacionadas com correio, cópias, impressões, envelopes, material de escritório, tarifas/taxas bancárias, e outras despesas decorrentes de atos praticados pela ADMINISTRADORA em benefício ao CONDOMINIO. Somado a isso, os demais itens previstos no Referencial de Serviços Especiais descritos abaixo, quando efetivados, serão pagos à ADMINISTRADORA, conforme segue:\n\n' },
 
       {
         style: 'tableExample',
+        pageBreak: 'before',
         table: {
           widths: ['*', '*'],
           body: [
-            [{ text: table41Headers.servico, bold: true, fillColor: '#eeeeee' }, { text: table41Headers.valor, bold: true, fillColor: '#eeeeee' }],
-            ...table41Data.map(row => [
-              row.servico, 
-              row.tipo === 'valor' ? row.valor : (row.tipo === 'isento' ? 'ISENTO' : row.valor)
+            [{ text: table41Headers.servico, style: 'tableHeader', border: [false, false, false, false] }, { text: table41Headers.valor, style: 'tableHeader', border: [false, false, false, false] }],
+            ...table41Data.map((row, index) => [
+              { text: row.servico, fillColor: index % 2 === 0 ? '#f4f9fd' : '#ffffff', margin: [5, 5, 5, 5], border: [false, true, false, true] }, 
+              { text: row.tipo === 'valor' ? row.valor : (row.tipo === 'isento' ? 'ISENTO' : row.valor), fillColor: index % 2 === 0 ? '#f4f9fd' : '#ffffff', margin: [5, 5, 5, 5], border: [false, true, false, true] }
             ])
           ]
+        },
+        layout: {
+          hLineWidth: function (i: number, node: any) { return 1; },
+          vLineWidth: function (i: number, node: any) { return 0; },
+          hLineColor: function (i: number, node: any) { return '#e2e8f0'; },
         }
       },
 
-      { text: '\n4.1.1. Serão repassadas mediante reembolso as eventuais despesas de aluguéis de máquinas, contratação de operadores, telões etc., que demandarem despesas, e que vierem a serem solicitadas pelo CONDOMÍNIO, de modo que, não faça parte do escopo ou quadro de materiais que a ADMINISTRADORA possua para a prestação de serviços.\n\n' },
-      { text: '4.1.2. Fica claro nesta oportunidade, que os valores previstos nesta tabela referencial, ficarão sujeitos ao reajuste pelo índice econômico escolhido no quadro de resumo do preambulo.\n\n' },
+      { text: '4.1.1. Serão repassadas mediante reembolso as eventuais despesas de aluguéis de máquinas, contratação de operadores, telões etc., que demandarem despesas, e que vierem a serem solicitadas pelo CONDOMÍNIO, de modo que, não faça parte do escopo ou quadro de materiais que a ADMINISTRADORA possua para a prestação de serviços.\n\n', margin: [0, 15, 0, 0] },
+      { text: '4.1.2. Os serviços especiais previstos na Cláusula 4.1, quando efetivamente prestados, terão seus valores reajustados no mês de janeiro de cada ano, com base no índice econômico indicado no quadro resumo deste contrato, aplicando-se a variação acumulada do referido índice no período.\n\n', margin: [0, 15, 0, 0] },
       ...(formData.tipoLgpd === 'Completa' ? [
-        { text: '4.2. - Considerando o tratamento de dados pessoais realizado pela ADMINISTRADORA, seus funcionários, representantes, contratados, subcontratados ou outros, em nome e a mando do CONDOMINIO, a ADMINISTRADORA deve garantir que qualquer terceiro envolvido no tratamento em seu nome, em razão disto, cumprirá integralmente aquilo definido pela Lei Geral de Proteção de Dados (“LGPD” - Lei nº 13.709/18). A ADMINISTRADORA deverá observar as diretrizes da legislação aplicável a matérias relacionadas à proteção de dados pessoais e privacidade, principalmente no que se refere ao tratamento de informações pessoais relacionados ao objeto da contratação do presente, inclusive nas seguintes condições:\n\n' },
-        { text: '4.2.1. A ADMINISTRADORA assegura que os dados pessoais e/ou sensíveis tratados em decorrência deste contrato não serão acessados, compartilhados ou transferidos a terceiros sem a autorização prévia e por escrito do CONDOMINIO. Caso o CONDOMINIO autorize estas operações de tratamento, a ADMINISTRADORA deverá garantir que tais terceiros se obriguem, por escrito, a assegurar a mesma proteção aos dados pessoais estabelecida neste contrato. A ADMINISTRADORA será responsável por todas as ações e omissões realizadas por tais terceiros relativas ao tratamento dos referidos dados pessoais, que tiver realizado.\n\n' },
-        { text: '4.2.2. Caso o ADMINISTRADORA identificar a ocorrência de um incidente de segurança, deverá notificar o CONDOMINIO em até 48h (quarenta e oito horas), por escrito. A notificação deverá conter informações detalhadas contendo, no mínimo, a descrição do ocorrido e de sua causa, a natureza dos dados afetados, informações sobre os titulares envolvidos, quais os riscos relacionados e os possíveis impactos aos titulares, as ações adotadas para a prevenção e as medidas técnicas e administrativas para a mitigação dos efeitos e dos prejuízos, para que a ADMINISTRADORA possa cumprir com eventuais exigências legais.\n\n' },
-        { text: '4.2.3. A ADMINISTRADORA deverá, sob o comando do CONDOMINIO, ou quando da extinção do vínculo contratual e obrigacional existente, devolver integralmente os dados pessoais e excluí-los definitiva e permanentemente, salvo se aplicáveis obrigações legais ou regulatórias que determinem a continuidade do seu armazenamento, dentro do prazo legal estabelecido.\n\n' },
-        { text: '4.2.4. A ADMINISTRADORA será responsável por quaisquer reclamações, perdas e danos, que venha a sofrer o CONDOMINIO, além de multas, inclusive as aplicadas pelas autoridades competentes, e qualquer outra situação que exija o pagamento de valores pecuniários ou acarrete prejuízos, quando os eventos decorrerem de: a-) descumprimento, pela ADMINISTRADORA, ou por terceiros por ela contratados, das disposições expostas neste instrumento; b-) qualquer incidente relacionado aos dados pessoais tratados pela ADMINISTRADORA ou de terceiros por ela contratados, referentes a este contrato, ou c-) qualquer ato da ADMINISTRADORA ou de terceiros por ela contratados, em discordância com a legislação aplicável à privacidade e proteção de dados.\n\n' },
-        { text: '4.2.5. A ADMINISTRADORA não deverá realizar quaisquer ações proibidas pela Lei Federal nº 12.846/2013, Lei Federal nº 9.613/1998, e as demais normas aplicáveis que tratem das práticas de atos contra a administração pública, corrupção, lavagem de dinheiro, evasão fiscal, improbidade administrativa, financiamento ao terrorismo, bem como outras normas relacionadas (“Leis Anticorrupção”). Ademais, a ADMINISTRADORA não deve fazer pagamentos, oferecer ou transferir quaisquer bens ou direitos, bem como influenciar indevidamente qualquer servidor, funcionário ou empregado da administração pública direta ou indireta, qualquer membro de um partido político, ou candidato a um cargo político, ainda, qualquer terceiro em desconformidade com as Leis Anticorrupção ou a título de compliance.\n\n' },
-        { text: '4.2.6. A ADMINISTRADORA declaram e garantem que em todas as suas atividades relacionadas ao Contrato bem como em todas as suas atividades em geral e naquelas relacionadas ao seu grupo econômico, bem como seus respectivos diretores, conselheiros, administradores, colaboradores, funcionários, empregados ou beneficiários, consultores ou outros prepostos não tomaram ou tomarão qualquer medida que viole as Leis Anticorrupção e não pagaram, ofereceram, prometeram ou autorizaram, nem pagarão, oferecerão, prometerão, ou autorizarão o pagamento de dinheiro, bens ou direitos, direta ou indiretamente, a qualquer servidor, funcionário ou empregado da administração pública direta ou indireta, em qualquer caso com a finalidade de: influenciar qualquer ato ou decisão de tal pessoa em sua capacidade oficial; induzir tal pessoa a agir (seja por ação ou omissão) em violação de seu dever legal; obter qualquer vantagem indevida; ou induzir tal pessoa a usar a sua influência para afetar ou influenciar qualquer ato ou decisão de uma autoridade competente a título de compliance.\n\n' },
-        { text: '4.2.7. O não cumprimento pelas Pastes das Leis Anticorrupção a de compliance será considerada uma infração grave ao Contrato e conferirá à Parte inocente o direito de rescindir imediatamente o Contrato, assumindo a Parte infratora a exclusiva responsabilidade pelas perdas e danos decorrentes de tal infração, em conformidade com as normas aplicáveis.\n\n' }
+        { text: '4.2. - Considerando o tratamento de dados pessoais realizado pela ADMINISTRADORA, seus funcionários, representantes, contratados, subcontratados ou outros, em nome e a mando do CONDOMINIO, a ADMINISTRADORA deve garantir que qualquer terceiro envolvido no tratamento em seu nome, em razão disto, cumprirá integralmente aquilo definido pela Lei Geral de Proteção de Dados (“LGPD” - Lei nº 13.709/18). A ADMINISTRADORA deverá observar as diretrizes da legislação aplicável a matérias relacionadas à proteção de dados pessoais e privacidade, principalmente no que se refere ao tratamento de informações pessoais relacionados ao objeto da contratação do presente, inclusive nas seguintes condições:\n\n', margin: [0, 15, 0, 0] },
+        { text: '4.2.1. A ADMINISTRADORA assegura que os dados pessoais e/ou sensíveis tratados em decorrência deste contrato não serão acessados, compartilhados ou transferidos a terceiros sem a autorização prévia e por escrito do CONDOMINIO. Caso o CONDOMINIO autorize estas operações de tratamento, a ADMINISTRADORA deverá garantir que tais terceiros se obriguem, por escrito, a assegurar a mesma proteção aos dados pessoais estabelecida neste contrato. A ADMINISTRADORA será responsável por todas as ações e omissões realizadas por tais terceiros relativas ao tratamento dos referidos dados pessoais, que tiver realizado.\n\n', margin: [0, 15, 0, 0] },
+        { text: '4.2.2. Caso o ADMINISTRADORA identificar a ocorrência de um incidente de segurança, deverá notificar o CONDOMINIO em até 48h (quarenta e oito horas), por escrito. A notificação deverá conter informações detalhadas contendo, no mínimo, a descrição do ocorrido e de sua causa, a natureza dos dados afetados, informações sobre os titulares envolvidos, quais os riscos relacionados e os possíveis impactos aos titulares, as ações adotadas para a prevenção e as medidas técnicas e administrativas para a mitigação dos efeitos e dos prejuízos, para que a ADMINISTRADORA possa cumprir com eventuais exigências legais.\n\n', margin: [0, 15, 0, 0] },
+        { text: '4.2.3. A ADMINISTRADORA deverá, sob o comando do CONDOMINIO, ou quando da extinção do vínculo contratual e obrigacional existente, devolver integralmente os dados pessoais e excluí-los definitiva e permanentemente, salvo se aplicáveis obrigações legais ou regulatórias que determinem a continuidade do seu armazenamento, dentro do prazo legal estabelecido.\n\n', margin: [0, 15, 0, 0] },
+        { text: '4.2.4. A ADMINISTRADORA será responsável por quaisquer reclamações, perdas e danos, que venha a sofrer o CONDOMINIO, além de multas, inclusive as aplicadas pelas autoridades competentes, e qualquer outra situação que exija o pagamento de valores pecuniários ou acarrete prejuízos, quando os eventos decorrerem de: a-) descumprimento, pela ADMINISTRADORA, ou por terceiros por ela contratados, das disposições expostas neste instrumento; b-) qualquer incidente relacionado aos dados pessoais tratados pela ADMINISTRADORA ou de terceiros por ela contratados, referentes a este contrato, ou c-) qualquer ato da ADMINISTRADORA ou de terceiros por ela contratados, em discordância com a legislação aplicável à privacidade e proteção de dados.\n\n', margin: [0, 15, 0, 0] },
+        { text: '4.2.5. A ADMINISTRADORA não deverá realizar quaisquer ações proibidas pela Lei Federal nº 12.846/2013, Lei Federal nº 9.613/1998, e as demais normas aplicáveis que tratem das práticas de atos contra a administração pública, corrupção, lavagem de dinheiro, evasão fiscal, improbidade administrativa, financiamento ao terrorismo, bem como outras normas relacionadas (“Leis Anticorrupção”). Ademais, a ADMINISTRADORA não deve fazer pagamentos, oferecer ou transferir quaisquer bens ou direitos, bem como influenciar indevidamente qualquer servidor, funcionário ou empregado da administração pública direta ou indireta, qualquer membro de um partido político, ou candidato a um cargo político, ainda, qualquer terceiro em desconformidade com as Leis Anticorrupção ou a título de compliance.\n\n', margin: [0, 15, 0, 0] },
+        { text: '4.2.6. A ADMINISTRADORA declaram e garantem que em todas as suas atividades relacionadas ao Contrato bem como em todas as suas atividades em geral e naquelas relacionadas ao seu grupo econômico, bem como seus respectivos diretores, conselheiros, administradores, colaboradores, funcionários, empregados ou beneficiários, consultores ou outros prepostos não tomaram ou tomarão qualquer medida que viole as Leis Anticorrupção e não pagaram, ofereceram, prometeram ou autorizaram, nem pagarão, oferecerão, prometerão, ou autorizarão o pagamento de dinheiro, bens ou direitos, direta ou indiretamente, a qualquer servidor, funcionário ou empregado da administração pública direta ou indireta, em qualquer caso com a finalidade de: influenciar qualquer ato ou decisão de tal pessoa em sua capacidade oficial; induzir tal pessoa a agir (seja por ação ou omissão) em violação de seu dever legal; obter qualquer vantagem indevida; ou induzir tal pessoa a usar a sua influência para afetar ou influenciar qualquer ato ou decisão de uma autoridade competente a título de compliance.\n\n', margin: [0, 15, 0, 0] },
+        { text: '4.2.7. O não cumprimento pelas Pastes das Leis Anticorrupção a de compliance será considerada uma infração grave ao Contrato e conferirá à Parte inocente o direito de rescindir imediatamente o Contrato, assumindo a Parte infratora a exclusiva responsabilidade pelas perdas e danos decorrentes de tal infração, em conformidade com as normas aplicáveis.\n\n', margin: [0, 15, 0, 0] }
       ] : [
-        { text: '4.2. As partes, por si próprias, os seus empregados e residentes, comprometem-se a agir neste contrato de acordo com a atual Legislação sobre Proteção de Dados Pessoais (LGPD) e as decisões dos órgãos reguladores e de supervisão sobre o assunto, especialmente a Lei 13.709/2018. Além disso, a PARTE CONTRATANTE declara que detém todas as autorizações, licenças, permissões, concessões, consentimentos, direitos e/ou garantias legalmente necessários ("Autorizações de Tratamento") para o propósito de autorizar o tratamento dos Dados Pessoais por si fornecidos e de acordo com as suas diretrizes, declarando também que tais Dados Pessoais foram obtidos legalmente, em estrita conformidade com todas as leis aplicáveis.\n\n' }
+        { text: '4.2. As partes, por si próprias, os seus empregados e residentes, comprometem-se a agir neste contrato de acordo com a atual Legislação sobre Proteção de Dados Pessoais (LGPD) e as decisões dos órgãos reguladores e de supervisão sobre o assunto, especialmente a Lei 13.709/2018. Além disso, a PARTE CONTRATANTE declara que detém todas as autorizações, licenças, permissões, concessões, consentimentos, direitos e/ou garantias legalmente necessários ("Autorizações de Tratamento") para o propósito de autorizar o tratamento dos Dados Pessoais por si fornecidos e de acordo com as suas diretrizes, declarando também que tais Dados Pessoais foram obtidos legalmente, em estrita conformidade com todas as leis aplicáveis.\n\n', margin: [0, 15, 0, 0] }
       ]),
-      { text: '4.3. O presente contrato e prestação de serviços não estabelecerá qualquer relação ou vínculo empregatício entre o CONDOMÍNIO e os empregados da ADMINISTRADORA, respondendo a mesma com exclusividade pelas eventuais reclamações trabalhistas ajuizadas por seus funcionários ou profissionais envolvidos na prestação dos serviços.\n\n' },
-      { text: '4.4. As partes declaram expressamente substituídos todos os instrumentos ou acordos anteriormente celebrados, que possuam o mesmo objeto do presente contrato, de modo que a nova relação jurídico-comercial (condições, procedimentos, valores etc.), decorrente dos instrumentos antigos, passa a ser regida pelo disposto no presente instrumento a contar da data de início da vigência deste contrato.\n\n' },
-      { text: '4.5. Fica expressa e irrevogavelmente estabelecido que a tolerância ou o não exercício pelas partes, de direitos garantidos em lei ou por este contrato, não significará renúncia ou novação, podendo as partes exercê-los a qualquer momento.\n\n' },
-      { text: `4.6. As partes elegem o foro da cidade de ${formData.tipoForo === 'Personalizado' && formData.cidadeForo ? formData.cidadeForo : 'São Paulo'}, Estado de São Paulo, para dirimir quaisquer questões provenientes deste instrumento, renunciando a qualquer outro, por mais privilegiado que seja.\n\n` },
+      { text: '4.3. O presente contrato e prestação de serviços não estabelecerá qualquer relação ou vínculo empregatício entre o CONDOMÍNIO e os empregados da ADMINISTRADORA, respondendo a mesma com exclusividade pelas eventuais reclamações trabalhistas ajuizadas por seus funcionários ou profissionais envolvidos na prestação dos serviços.\n\n', margin: [0, 15, 0, 0] },
+      { text: '4.4. As partes declaram expressamente substituídos todos os instrumentos ou acordos anteriormente celebrados, que possuam o mesmo objeto do presente contrato, de modo que a nova relação jurídico-comercial (condições, procedimentos, valores etc.), decorrente dos instrumentos antigos, passa a ser regida pelo disposto no presente instrumento a contar da data de início da vigência deste contrato.\n\n', margin: [0, 15, 0, 0] },
+      { text: '4.5. Fica expressa e irrevogavelmente estabelecido que a tolerância ou o não exercício pelas partes, de direitos garantidos em lei ou por este contrato, não significará renúncia ou novação, podendo as partes exercê-los a qualquer momento.\n\n', margin: [0, 15, 0, 0] },
+      { text: `4.6. As partes elegem o foro da cidade de ${formData.tipoForo === 'Personalizado' && formData.cidadeForo ? formData.cidadeForo : 'São Paulo'}, Estado de São Paulo, para dirimir quaisquer questões provenientes deste instrumento, renunciando a qualquer outro, por mais privilegiado que seja.\n\n`, margin: [0, 15, 0, 0] },
       
       ...(additionalClauses.length > 0 ? [
-        { text: 'CLÁUSULAS ADICIONAIS\n\n', style: 'boldText', color: '#059669' },
+        { text: 'CLÁUSULAS ADICIONAIS\n\n', style: 'boldText', color: '#059669', margin: [0, 15, 0, 0] },
         ...additionalClauses.map((clause, index) => ({
           text: [
             { text: `${index + 5}. ${clause.title}: `, bold: true },
             { text: `${clause.text}\n\n` }
-          ]
+          ],
+          margin: [0, 15, 0, 0]
         }))
       ] : []),
 
-      { text: '4.7. As PARTES declaram que estarem justos e contratados, assinam o presente Instrumento Particular de Contrato de Prestação de Serviços por meio eletrônico, com o uso da plataforma Clicksign (i.e., https://www.clicksign.com/), nos termos da Medida Provisória nº 2.200-2/2001. As PARTES e os Intervenientes anuentes reconhecem como válidas as assinaturas realizadas inclusive com certificados não emitidos pela Infraestrutura de Chaves Públicas Brasileira (i.e., ICP-Brasil), nos termos do Artigo 10, Parágrafo 2º da Medida Provisória nº 2.200-2/2001, quando enviadas para os E-mails encaminhados neste Contrato. Este Contrato produz efeitos para todas as PARTES e para os Intervenientes Anuentes a partir da data indicada no QUADRO RESUMO, ainda que uma ou mais PARTES realizem a assinatura em data posterior, para que surtam seus legais e jurídicos efeitos.\n\n' },
-
-      { text: '____________________________________________________', alignment: 'center', margin: [0, 40, 0, 0] },
-      { text: formData.nomeCondominio || 'CONTRATANTE', alignment: 'center' },
-      { text: '\n____________________________________________________', alignment: 'center', margin: [0, 40, 0, 0] },
-      { text: 'Sell Administradora de Condomínios', alignment: 'center' },
-      { text: 'CONTRATADA', alignment: 'center' },
+      { text: '4.7. As PARTES declaram que estarem justos e contratados, assinam o presente Instrumento Particular de Contrato de Prestação de Serviços por meio eletrônico, com o uso da plataforma Clicksign (i.e., https://www.clicksign.com/), nos termos da Medida Provisória nº 2.200-2/2001. As PARTES e os Intervenientes anuentes reconhecem como válidas as assinaturas realizadas inclusive com certificados não emitidos pela Infraestrutura de Chaves Públicas Brasileira (i.e., ICP-Brasil), nos termos do Artigo 10, Parágrafo 2º da Medida Provisória nº 2.200-2/2001, quando enviadas para os E-mails encaminhados neste Contrato. Este Contrato produz efeitos para todas as PARTES e para os Intervenientes Anuentes a partir da data indicada no QUADRO RESUMO, ainda que uma ou mais PARTES realizem a assinatura em data posterior, para que surtam seus legais e jurídicos efeitos.\n\n', margin: [0, 15, 0, 0] }
     ],
     styles: {
-      header: { fontSize: 12, bold: true, alignment: 'center' },
-      boldText: { bold: true, margin: [0, 5, 0, 2] },
-      tableExample: { margin: [0, 5, 0, 15] }
+      header: { fontSize: 14, bold: true, alignment: 'center', color: '#001f3f', margin: [0, 10, 0, 10] },
+      boldText: { bold: true, margin: [0, 10, 0, 5], color: '#001f3f', fontSize: 11 },
+      tableExample: { margin: [0, 5, 0, 15] },
+      tableHeader: { bold: true, fontSize: 10, color: 'white', fillColor: '#2b82c9', margin: [5, 5, 5, 5] },
+      clauseHeader: { bold: true, fontSize: 11, color: 'white', fillColor: '#001f3f', margin: [5, 5, 5, 5] }
     },
     defaultStyle: {
       fontSize: 10,
-      lineHeight: 1.3,
-      alignment: 'justify'
+      lineHeight: 1.5,
+      alignment: 'justify',
+      color: '#333333'
     }
   };
   
