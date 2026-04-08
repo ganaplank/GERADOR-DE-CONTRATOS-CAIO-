@@ -88,6 +88,7 @@ export const generatePDF = (formData: any, table41Data: any[], table41Headers: a
                   { text: `Endereço: `, bold: true }, `${formData.enderecoCondominio || '____________________________________________________'}\n`,
                   { text: `Representada Síndico (a): `, bold: true }, `${formData.nomeSindico || '____________________'} `, { text: `– CPF/CNPJ: `, bold: true }, `${formData.cpfSindico || '____________________'}`,
                   ...(formData.cpfSindico.replace(/\D/g, '').length > 11 ? [{ text: ` – Representante: `, bold: true }, `${formData.representanteSindico || '____________________'}`] : []),
+                  ...(formData.showCpfRepresentante && formData.cpfRepresentanteSindico ? [{ text: ` – CPF do Representante: `, bold: true }, `${formData.cpfRepresentanteSindico}`] : []),
                   '\n',
                   { text: `Telefone: `, bold: true }, `${formData.telefoneSindico || '____________________'} `, { text: `E-mail: `, bold: true }, `${formData.emailSindico || '____________________'}`
                 ],

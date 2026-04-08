@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { generatePDF } from './utils/pdfGenerator';
 import { generateWord } from './utils/wordGenerator';
+import { numeroPorExtenso } from './utils/extenso';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
 import Fuse from 'fuse.js';
@@ -93,12 +94,17 @@ export default function App() {
   const [newClauseTitle, setNewClauseTitle] = useState('');
   const [newClauseText, setNewClauseText] = useState('');
   
+  const [valorFormatMode, setValorFormatMode] = useState<'auto' | 'manual'>('auto');
+  const [valorAutoPunctuate, setValorAutoPunctuate] = useState(false);
+  
   const [formData, setFormData] = useState({
     nomeCondominio: '',
     cnpjCondominio: '',
     enderecoCondominio: '',
     nomeSindico: '',
     cpfSindico: '',
+    cpfRepresentanteSindico: '',
+    showCpfRepresentante: false,
     representanteSindico: '',
     telefoneSindico: '',
     emailSindico: '',
@@ -183,19 +189,21 @@ export default function App() {
       setPendingDownloadType(type);
       setShowValidationModal(true);
     } else {
+      const finalData = { ...formData, valorPrestacao: getFinalValorPrestacao() };
       if (type === 'pdf') {
-        generatePDF(formData, table41Data, table41Headers, additionalClauses);
+        generatePDF(finalData, table41Data, table41Headers, additionalClauses);
       } else {
-        generateWord(formData, table41Data, table41Headers, additionalClauses);
+        generateWord(finalData, table41Data, table41Headers, additionalClauses);
       }
     }
   };
 
   const proceedWithDownload = () => {
+    const finalData = { ...formData, valorPrestacao: getFinalValorPrestacao() };
     if (pendingDownloadType === 'pdf') {
-      generatePDF(formData, table41Data, table41Headers, additionalClauses);
+      generatePDF(finalData, table41Data, table41Headers, additionalClauses);
     } else if (pendingDownloadType === 'word') {
-      generateWord(formData, table41Data, table41Headers, additionalClauses);
+      generateWord(finalData, table41Data, table41Headers, additionalClauses);
     }
     setShowValidationModal(false);
     setPendingDownloadType(null);
@@ -243,6 +251,72 @@ export default function App() {
     handleClearSection2();
     handleClearSection3();
     setErrors({});
+  };
+
+  const handleDateBlur = () => {
+    let val = formData.dataBase.replace(/\D/g, '');
+    if (!val) return;
+    
+    let day = '', month = '', year = '';
+    
+    if (val.length === 4) {
+      day = val.substring(0, 2);
+      month = val.substring(2, 4);
+      year = new Date().getFullYear().toString();
+    } else if (val.length === 6) {
+      day = val.substring(0, 2);
+      month = val.substring(2, 4);
+      year = '20' + val.substring(4, 6);
+    } else if (val.length === 8) {
+      day = val.substring(0, 2);
+      month = val.substring(2, 4);
+      year = val.substring(4, 8);
+    } else {
+      return; 
+    }
+    
+    setFormData({ ...formData, dataBase: `${day}/${month}/${year}` });
+  };
+
+  const getFinalValorPrestacao = () => {
+    const raw = formData.valorPrestacao;
+    if (!raw) return '';
+
+    let cleanStr = raw.replace(/[^\d.,]/g, '');
+    if (cleanStr.includes(',')) {
+      cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
+    }
+    const numToExtenso = parseFloat(cleanStr);
+
+    if (valorFormatMode === 'auto') {
+      if (isNaN(numToExtenso)) return raw;
+      const formattedNum = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numToExtenso);
+      const extenso = numeroPorExtenso(numToExtenso, true);
+      return `${formattedNum} (${extenso})`;
+    } else {
+      let resultStr = raw;
+      if (valorAutoPunctuate) {
+        let cleanStrForPunctuation = raw.replace(/[^\d.,]/g, '');
+        if (cleanStrForPunctuation.includes(',')) {
+           let parts = cleanStrForPunctuation.split(',');
+           let intPart = parseInt(parts[0].replace(/\./g, ''), 10);
+           if(!isNaN(intPart)) {
+               resultStr = intPart.toLocaleString('pt-BR') + ',' + parts[1];
+           }
+        } else {
+           let intPart = parseInt(cleanStrForPunctuation.replace(/\./g, ''), 10);
+           if(!isNaN(intPart)) {
+               resultStr = intPart.toLocaleString('pt-BR');
+           }
+        }
+      }
+
+      if (!isNaN(numToExtenso)) {
+        const extenso = numeroPorExtenso(numToExtenso, false);
+        return `${resultStr} (${extenso})`;
+      }
+      return resultStr;
+    }
   };
 
   const [table41Data, setTable41Data] = useState(JSON.parse(JSON.stringify(INITIAL_TABLE_41_DATA)));
@@ -836,17 +910,44 @@ export default function App() {
                 {errors.cpfSindico && <p className="text-red-500 text-xs">{errors.cpfSindico}</p>}
               </div>
               {formData.cpfSindico.replace(/\D/g, '').length > 11 && (
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-700">Representante da Empresa</label>
-                  <input
-                    type="text"
-                    name="representanteSindico"
-                    value={formData.representanteSindico}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                    placeholder="Nome do representante legal"
-                  />
-                </div>
+                <>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-slate-700">Representante da Empresa</label>
+                    <input
+                      type="text"
+                      name="representanteSindico"
+                      value={formData.representanteSindico}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                      placeholder="Nome do representante legal"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 cursor-pointer mt-6">
+                      <input
+                        type="checkbox"
+                        name="showCpfRepresentante"
+                        checked={formData.showCpfRepresentante}
+                        onChange={(e) => setFormData(prev => ({ ...prev, showCpfRepresentante: e.target.checked }))}
+                        className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 rounded"
+                      />
+                      <span className="text-sm text-slate-700">Adicionar CPF do representante</span>
+                    </label>
+                  </div>
+                  {formData.showCpfRepresentante && (
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-slate-700">CPF do Representante</label>
+                      <input
+                        type="text"
+                        name="cpfRepresentanteSindico"
+                        value={formData.cpfRepresentanteSindico}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+                  )}
+                </>
               )}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Telefone</label>
@@ -893,22 +994,46 @@ export default function App() {
                   name="dataBase"
                   value={formData.dataBase}
                   onChange={handleInputChange}
+                  onBlur={handleDateBlur}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${errors.dataBase ? 'border-red-500' : 'border-slate-300'}`}
-                  placeholder="ex: 01/04/2026"
+                  placeholder="ex: 010426 ou 01/04/2026"
                 />
                 {errors.dataBase && <p className="text-red-500 text-xs">{errors.dataBase}</p>}
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Valor da Prestação</label>
+                <div className="mb-2 flex flex-col space-y-2">
+                  <div className="flex items-center space-x-4">
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input type="radio" className="form-radio text-emerald-600 focus:ring-emerald-500" name="formatMode" value="auto" checked={valorFormatMode === 'auto'} onChange={() => setValorFormatMode('auto')} />
+                      <span className="ml-2 text-sm text-slate-700 dark:text-slate-300">Adaptar automaticamente (R$)</span>
+                    </label>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input type="radio" className="form-radio text-emerald-600 focus:ring-emerald-500" name="formatMode" value="manual" checked={valorFormatMode === 'manual'} onChange={() => setValorFormatMode('manual')} />
+                      <span className="ml-2 text-sm text-slate-700 dark:text-slate-300">Inserir manualmente</span>
+                    </label>
+                  </div>
+                  {valorFormatMode === 'manual' && (
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="form-checkbox text-emerald-600 focus:ring-emerald-500" checked={valorAutoPunctuate} onChange={(e) => setValorAutoPunctuate(e.target.checked)} />
+                      <span className="ml-2 text-sm text-slate-700 dark:text-slate-300">Acertar pontuação automaticamente (ex: 1.000.000)</span>
+                    </label>
+                  )}
+                </div>
                 <input
                   type="text"
                   name="valorPrestacao"
                   value={formData.valorPrestacao}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${errors.valorPrestacao ? 'border-red-500' : 'border-slate-300'}`}
-                  placeholder="ex: R$ 2.700,00"
+                  placeholder={valorFormatMode === 'auto' ? "Ex: 2000 ou 2000,50" : "Ex: 2000"}
                 />
                 {errors.valorPrestacao && <p className="text-red-500 text-xs">{errors.valorPrestacao}</p>}
+                {formData.valorPrestacao && (
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <strong>Pré-visualização:</strong> {getFinalValorPrestacao()}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1320,7 +1445,7 @@ export default function App() {
 
                 <div className="space-y-4 text-justify">
                   <p>
-                    Pelo presente instrumento particular, de um lado <strong>SELL ADMINISTRADORA DE CONDOMÍNIOS LTDA</strong>, com sede na Av. Pompéia, 723, São Paulo/SP, inscrita no CNPJ sob o nº 14.804.150/0001-62, doravante denominada <strong>CONTRATADA</strong>, e de outro lado o <strong>{formData.nomeCondominio || '____________________'}</strong>, inscrito no CNPJ sob o nº <strong>{formData.cnpjCondominio || '____________________'}</strong>, situado em <strong>{formData.enderecoCondominio || '____________________'}</strong>, representado por seu síndico(a) <strong>{formData.nomeSindico || '____________________'}</strong>, doravante denominado <strong>CONTRATANTE</strong>, têm entre si justo e contratado o seguinte:
+                    Pelo presente instrumento particular, de um lado <strong>SELL ADMINISTRADORA DE CONDOMÍNIOS LTDA</strong>, com sede na Av. Pompéia, 723, São Paulo/SP, inscrita no CNPJ sob o nº 14.804.150/0001-62, doravante denominada <strong>CONTRATADA</strong>, e de outro lado o <strong>{formData.nomeCondominio || '____________________'}</strong>, inscrito no CNPJ sob o nº <strong>{formData.cnpjCondominio || '____________________'}</strong>, situado em <strong>{formData.enderecoCondominio || '____________________'}</strong>, representado por seu síndico(a) <strong>{formData.nomeSindico || '____________________'}</strong>, inscrito no {formData.cpfSindico.replace(/\D/g, '').length > 11 ? 'CNPJ' : 'CPF'} sob o nº <strong>{formData.cpfSindico || '____________________'}</strong>{formData.showCpfRepresentante && formData.cpfRepresentanteSindico ? `, portador do CPF nº ${formData.cpfRepresentanteSindico}` : ''}, doravante denominado <strong>CONTRATANTE</strong>, têm entre si justo e contratado o seguinte:
                   </p>
 
                   <section>
@@ -1336,7 +1461,7 @@ export default function App() {
 
                   <section>
                     <h3 className="font-bold uppercase mb-1">CLÁUSULA TERCEIRA - DOS HONORÁRIOS</h3>
-                    <p>Pela prestação dos serviços ora contratados, o CONTRATANTE pagará à CONTRATADA a importância mensal de <strong>{formData.valorPrestacao || 'R$ 0,00'}</strong>...</p>
+                    <p>Pela prestação dos serviços ora contratados, o CONTRATANTE pagará à CONTRATADA a importância mensal de <strong>{getFinalValorPrestacao() || 'R$ 0,00'}</strong>...</p>
                   </section>
 
                   {additionalClauses.length > 0 && (

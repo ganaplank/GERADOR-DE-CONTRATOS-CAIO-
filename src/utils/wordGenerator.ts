@@ -183,7 +183,7 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
               children: [
                 new TableCell({
                   children: [
-                    new Paragraph({ children: [new TextRun({ text: `${formData.nomeCondominio ? `CONDOMÍNIO ${formData.nomeCondominio.toUpperCase()}` : 'CONDOMÍNIO'} – CNPJ/MF: ${formData.cnpjCondominio || '____________________'}`, bold: true, color: "001f3f" })] }),
+                    new Paragraph({ children: [new TextRun({ text: `${formData.nomeCondominio ? `CONDOMÍNIO ${formData.nomeCondominio.toUpperCase()}` : 'CONDOMÍNIO'} – CNPJ/MF: ${formData.cnpjCondominio || '____________________'}${showCpfRepresentante && formData.cpfRepresentante ? ` – CPF do Representante: ${formData.cpfRepresentante}` : ''}`, bold: true, color: "001f3f" })] }),
                     new Paragraph({ children: [new TextRun({ text: `Endereço: `, bold: true }), new TextRun({ text: `${formData.enderecoCondominio || '____________________________________________________'}` })] }),
                     new Paragraph({ children: [
                       new TextRun({ text: `Representada Síndico (a): `, bold: true }), 
