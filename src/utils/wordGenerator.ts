@@ -4,8 +4,25 @@ import { logoBase64 } from './logoBase64';
 import { iconBase64 } from './iconBase64';
 
 export const generateWord = async (formData: any, table41Data: any[], table41Headers: any, additionalClauses: { id: string; title: string; text: string }[] = []) => {
-  const createBoldParagraph = (text: string) => new Paragraph({ children: [new TextRun({ text, bold: true })] });
-  const createParagraph = (text: string) => new Paragraph({ text, alignment: AlignmentType.JUSTIFIED });
+  const createBoldParagraph = (text: string) => new Paragraph({ 
+    children: [new TextRun({ text, bold: true })],
+    spacing: { before: 100, after: 100 }
+  });
+  const createParagraph = (text: string) => new Paragraph({ 
+    text, 
+    alignment: AlignmentType.JUSTIFIED,
+    spacing: { before: 100, after: 100 }
+  });
+  const createHeading = (text: string) => new Paragraph({
+    children: [new TextRun({ text, bold: true, color: "001f3f", size: 24 })],
+    spacing: { before: 300, after: 150 },
+    heading: HeadingLevel.HEADING_1
+  });
+  const createSubHeading = (text: string) => new Paragraph({
+    children: [new TextRun({ text, bold: true, color: "001f3f", size: 22 })],
+    spacing: { before: 200, after: 100 },
+    heading: HeadingLevel.HEADING_2
+  });
   
   const createBoxedText = (text: string) => new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -165,8 +182,8 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
           ],
         }),
       },
-      children: [        new Paragraph({ children: [new TextRun({ text: "CONTRATO DE PRESTAÇÃO DE SERVIÇOS - QUADRO RESUMO", bold: true, size: 28, color: "001f3f" })], alignment: AlignmentType.CENTER }),
-        new Paragraph({ children: [new TextRun({ text: "ADMINISTRAÇÃO DE CONDOMÍNIOS/ASSOCIAÇÕES E OUTRAS AVENÇAS", bold: true, size: 28, color: "001f3f" })], alignment: AlignmentType.CENTER }),
+      children: [        createHeading("CONTRATO DE PRESTAÇÃO DE SERVIÇOS - QUADRO RESUMO"),
+        createSubHeading("ADMINISTRAÇÃO DE CONDOMÍNIOS/ASSOCIAÇÕES E OUTRAS AVENÇAS"),
         new Paragraph({ text: "" }),
         
         new Paragraph({ children: [new TextRun({ text: "A partir de agora denominado como CONDOMÍNIO:", bold: true, color: "001f3f" })] }),
@@ -183,7 +200,7 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
               children: [
                 new TableCell({
                   children: [
-                    new Paragraph({ children: [new TextRun({ text: `${formData.nomeCondominio ? `CONDOMÍNIO ${formData.nomeCondominio.toUpperCase()}` : 'CONDOMÍNIO'} – CNPJ/MF: ${formData.cnpjCondominio || '____________________'}${showCpfRepresentante && formData.cpfRepresentante ? ` – CPF do Representante: ${formData.cpfRepresentante}` : ''}`, bold: true, color: "001f3f" })] }),
+                    new Paragraph({ children: [new TextRun({ text: `${formData.nomeCondominio ? `CONDOMÍNIO ${formData.nomeCondominio.toUpperCase()}` : 'CONDOMÍNIO'} – CNPJ/MF: ${formData.cnpjCondominio || '____________________'}`, bold: true, color: "001f3f" })] }),
                     new Paragraph({ children: [new TextRun({ text: `Endereço: `, bold: true }), new TextRun({ text: `${formData.enderecoCondominio || '____________________________________________________'}` })] }),
                     new Paragraph({ children: [
                       new TextRun({ text: `Representada Síndico (a): `, bold: true }), 
@@ -269,23 +286,16 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
         new Paragraph({ text: "" }),
 
         createParagraph("1.1. Objeto - O objeto do presente contrato é a prestação de serviços especializados de administração de condomínio, associação e outras avenças, por parte da ADMINISTRADORA em favor do CONDOMÍNIO."),
-        new Paragraph({ text: "" }),
         createParagraph("1.2. Valor - Pelos serviços ora contratados, abrangidos no presente instrumento particular, o CONDOMÍNIO pagará mensalmente à ADMINISTRADORA a importância descrita no quadro resumo deste contrato. No preço convencionado estão previstos/inclusos todos os encargos, taxas, tributos e impostos exigidos por lei, com exceção das previsões específicas presentes neste contrato."),
-        new Paragraph({ text: "" }),
         createParagraph("1.3. Pagamento - O pagamento convencionado deverá ser efetuado até, no máximo, a data expressamente indicada no quadro resumo deste contrato, após a emissão da Nota Fiscal Eletrônica por parte da ADMINISTRADORA. O CONDOMÍNIO autoriza que todos os valores devidos à mesma, sejam por ela debitados de sua conta bancária, inclusive os referentes a reembolsos e os de consequência deste contrato. Em caso de não efetivação do pagamento na data convencionada, por procedência do CONDOMÍNIO, acarretará o pagamento de multa (2%), juros (1% ao mês) e atualização monetária (TJSP), sem prejuízo de outras cominações legais."),
-        new Paragraph({ text: "" }),
         createParagraph("1.4. Reajuste – O contrato será reajustado anualmente (a cada 12 meses) a partir da data-base, com o índice que consta no quadro resumo deste."),
-        new Paragraph({ text: "" }),
         createParagraph("1.4.1. Caso as partes presencie desequilíbrio contratual, quanto a incomum variação do índice de correção monetária escolhido, que consta no quadro resumo deste, o presente contrato poderá ter seu valor reajustado por outro índice econômico, por vontade das partes, a qualquer tempo, através de aditivo contratual expressamente firmado, ou, por aceite expresso do CONDOMÍNIO, através de qualquer um dos meios de comunicação habitual das partes."),
-        new Paragraph({ text: "" }),
 
         createBoxedText("CLÁUSULA 2 – DO PRAZO, RESCISÃO CONTRATUAL E TRANSFERÊNCIA DA ADMINISTRAÇÃO"),
         new Paragraph({ text: "" }),
 
         createParagraph(formData.clausula21),
-        new Paragraph({ text: "" }),
         createParagraph(formData.clausula22),
-        new Paragraph({ text: "" }),
         createParagraph("2.3. Transferência de Administração - A ADMINISTRADORA se obriga a entregar sob protocolo ao CONDOMÍNIO, no prazo de dez dias úteis contados da data da comunicação de rescisão: o cadastro de condôminos, indicando as unidades e respectivas frações ideais para efeito de rateio de despesas, livro de registro de empregados e última folha de pagamento dos funcionários do CONDOMÍNIO. E no prazo de vinte dias úteis todos os demais documentos pertencentes ao mesmo."),
         new Paragraph({ text: "" }),
 
@@ -293,48 +303,30 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
         new Paragraph({ text: "" }),
 
         createParagraph("3.1. Cadastro de Condôminos - Mediante listagem que lhe for fornecida, providenciar a implantação de cadastro de condôminos, medida que permitirá as emissões de avisos-recibos, comunicados em geral e relatórios controles. As alterações subsequentes serão procedidas mediante a comunicação expressa do (a) Síndico (a), ou diretamente pelo próprio condômino, que fornecerá os dados necessários, ou então a comunicação do condômino ou possuidor adquirente da unidade, que exibirá o título de propriedade para as anotações devidas."),
-        new Paragraph({ text: "" }),
         createParagraph("3.2. Assembleias Gerais – Emitir as convocações para as Assembleias Gerais Ordinárias e Extraordinárias, com as respectivas Ordens do Dia, observadas as disposições legais e da Convenção Condominial; Presença e assessoramento às Assembleias Gerais, atribuído como serviços especiais, mediante solicitação direta ou tácita do (a) Síndico (a); poderá elaborar as atas das Assembleias Gerais, em caso de seu representante ser membro da mesa de Assembleia, e posterior remessa da Ata a todos os condôminos; Registro em Cartório de títulos e documentos das Atas lavradas em livro próprio."),
-        new Paragraph({ text: "" }),
         createParagraph("3.3. Previsão Orçamentária - Assessoramento na elaboração de previsões orçamentárias, que serão submetidas à apreciação da Assembleia Geral; eventuais despesas extraordinárias aprovadas pelo CONDOMÍNIO, emergenciais ou não, e não inclusas na previsão orçamentária aprovada, serão objeto de rateio específico, a ser submetido à aprovação ou ratificação da Assembleia Geral, conforme o caso."),
-        new Paragraph({ text: "" }),
         createParagraph("3.4. Contas a Receber - A ADMINISTRADORA, através do seu departamento de contas a receber, efetuará o rateio e cobrança das previsões orçamentárias e demais receitas ordinárias e extraordinárias do CONDOMÍNIO, aprovadas em Assembleias ou mesmo as determinadas pelo (a) Síndico (a), mediante o envio antecipado dos avisos de cobrança bancária aos condôminos, da forma física ou por meio eletrônico."),
-        new Paragraph({ text: "" }),
         createParagraph(`3.5. Cobrança de Cotas Atrasadas - As cotas condominiais, rateios extraordinários e multas por infração regulamentar vencidos e não pagos serão cobrados administrativamente pela ADMINISTRADORA, no prazo de até 30 (trinta) dias contados da data original do vencimento, preferencialmente através de lembretes de cobrança, nos e-mails dos condôminos inadimplentes cadastrados no seu sistema. Os valores em aberto serão acrescidos de multa, juros e correção monetária. Além disso, após ${formData.diasCobrancaAdvocacia || '30'} dias do vencimento, a cobrança será direcionada a um escritório de advocacia, que utilizará de todos os meios para a efetiva cobrança de sua exclusiva responsabilidade, e serão cobrados honorários advocatícios sobre o valor do débito atualizado, com juros e multa, independente de ação judicial, ao condômino ou possuidor que der causa. O representante legal do CONDOMÍNIO deverá dar ciência dos procedimentos de cobranças aos seus condôminos ou possuidores das unidades autônomas.`),
-        new Paragraph({ text: "" }),
         createParagraph("3.6. Prestação de Contas – Mensalmente, será elaborada uma prestação de contas, na qual estará discriminada, detalhadamente, toda a movimentação financeira do CONDOMÍNIO - receitas e despesas – tudo em rigorosa conformidade com os comprovantes autorizados pelo (a) Síndico (a). Até o 20º dia do mês seguinte ao de referência, será remetida ao CONDOMÍNIO, de forma digital, pasta contendo toda a documentação comprobatória do período, para a devida conferência, aprovação ou parecer."),
-        new Paragraph({ text: "" }),
         createParagraph("3.7. Pagamento das Contas do Condomínio - As contas do condomínio serão pagas mediante a prévia e expressa autorização do síndico, exceto as decorrentes de procedimentos rotineiros, tais como: folha de pagamento e encargos sociais, contas de consumo de água, energia elétrica, gás, impostos e taxas, bem como as demais despesas previamente autorizadas por contrato."),
-        new Paragraph({ text: "" }),
         createParagraph("3.7.1. O CONDOMÍNIO deverá formalizar por escrito, com antecedência mínima de 2 dias úteis, quando quiser suspender o pagamento de serviços já contratados ou autorizar pagamentos não rotineiros."),
-        new Paragraph({ text: "" }),
         createParagraph("3.7.2. A ADMINISTRADORA responde por acréscimos a que der causa, embora fique eximida de responsabilidade por multas e penalidades, quando, por indisponibilidade de caixa do CONDOMÍNIO ou remessa de documentos pelo CONDOMÍNIO, ou a sua autorização de pagamento, sem o tempo hábil previsto, deixar de liquidar obrigações ou efetuar pagamentos após o vencimento."),
-        new Paragraph({ text: "" }),
         createParagraph("3.7.3. A ADMINISTRADORA não se responsabiliza por encargos tributários, previdenciários, trabalhistas, penalidades e sanções previstas em contratos de qualquer natureza, nos quais figure como parte o CONDOMÍNIO, derivados de pagamentos sem observância da legislação vigente, rescisões e outras ações, autorizadas pelo CONDOMÍNIO, sem ou contra sua orientação legal."),
-        new Paragraph({ text: "" }),
         createParagraph("3.7.4. Todas as contas relacionadas a consumos de água, gás ou qualquer outro valor individualizado por unidade autônoma, poderão serem incluídos nos boletos mensais encaminhados aos condôminos, entretanto, o CONDOMÍNIO ou empresa prestadora de tal serviço ao CONTRANTE, deverá encaminhar o arquivo digital em TXT, dentro do tempo hábil para o seu processamento e inclusão, expressamente e comprovadamente por meio de e-mail. A ADMINISTRADORA não se responsabiliza pelo conteúdo encaminhado, nem pela integridade e/ou verossimilhança dos dados fornecidos, de única responsabilidade do CONDOMÍNIO ou da empresa prestadora de tal serviço, bem como, não se responsabiliza por qualquer e eventual retificação de dados informados posteriormente ao seu lançamento original ou sem tempo hábil para tal, seja solicitado pelo CONTRATANTE ou pela empresa prestadora desses serviços."),
-        new Paragraph({ text: "" }),
         createParagraph("3.8. Seguro Contra Incêndio e Responsabilidade Civil – A responsabilidade pela contratação do seguro obrigatório de incêndio e de responsabilidade civil é exclusiva do (a) Síndico (a), representante legal do CONDOMÍNIO (artigo 1348, inciso IX, do Código Civil). A ADMINISTRADORA, não obstante, poderá auxiliar na obtenção de cotação das propostas de seguros para o CONDOMÍNIO, caso as Partes tenham prévia e oportunamente assim ajustado."),
-        new Paragraph({ text: "" }),
         createParagraph("3.9. Funcionários –Orientar e recolher nos respectivos prazos todos os encargos devidos, mantendo e apresentando, sempre em dia, os livros e documentos exigidos."),
-        new Paragraph({ text: "" }),
         createParagraph("3.9.1. Havendo a terceirização de mão-de-obra no condomínio, caberá a empresa prestadora destes serviços à responsabilidade pelo pagamento dos salários, adiantamentos, benefícios, recolhimento dos encargos trabalhistas e previdenciários, impostos, taxas, contribuições e demais obrigações assumidas pelas partes no específico contrato. Neste caso, não respondendo a ADMINISTRADORA, por nenhuma consequência que esta modalidade de serviço vier a acarretar ao CONDOMÍNIO, sejam elas de ordem trabalhista, civil, tributária ou mesmo criminais direta ou indiretamente."),
-        new Paragraph({ text: "" }),
         createParagraph("3.10. Pagamento dos Funcionários - Efetuar o pagamento do pessoal, nas bases salariais e de acordo com a legislação vigente, até o 5º (quinto) dia útil do mês seguinte ao vencido e adiantamento de 40% no 15º dia após a data do pagamento da folha. Os pagamentos correspondentes às horas extras, prêmios e adicionais extraordinários, bem como o gozo de férias, serão previamente autorizados pelo CONDOMÍNIO; O pagamento das verbas salariais, indenizatórios entre outras devidas aos empregados, dar-se-á por meio de crédito em conta corrente/salário do respectivo empregado, na forma indicada pela ADMINISTRADORA, salvo circunstância especial que impeça tal procedimento; O vale-alimentação, refeição e o vale-transporte serão pagos através de crédito eletrônico em cartões pessoais e individuais aos funcionários, por empresa terceirizada especializada, cujo custo pelo serviço é de responsabilidade do CONDOMÍNIO."),
-        new Paragraph({ text: "" }),
         createParagraph("3.11. Orçamentos – Colaborar na coleta de orçamentos e pesquisa de preços para a execução de obras e serviços, aquisição de equipamentos e materiais em geral, salvo os produtos e serviços que dependam de conhecimento e orientação técnica, para as quais será necessário contratar um profissional habilitado; A pedido do (a) síndico (a), a ADMINISTRADORA poderá fazer a cotação de fornecedores para a execução de serviços no CONDOMÍNIO, contudo não se responsabilizará pela contratação em si, nem poderá fiscalizar nem garantir o cumprimento das obrigações desses terceiros contratados, cabendo ao CONDOMÍNIO a análise dos riscos da contratação da empresa postulante dos serviços, bem como a decisão final por sua contratação."),
-        new Paragraph({ text: "" }),
         createParagraph("3.12. Expedição de Circulares – Poderá ficar a cargo da ADMINISTRADORA, a redação e encaminhamento aos condôminos, das circulares e editais que o síndico e as assembleias por bem determinar."),
-        new Paragraph({ text: "" }),
         createParagraph("3.13. Guarda de Documentos – Todos os documentos do CONDOMÍNIO constantes da pasta de prestação de contas mensal, não exigíveis em caso de fiscalização de órgãos competentes ou demandas trabalhistas, serão mantidos nos arquivos da ADMINISTRADORA somente até a finalização da pasta digital. Após decorrido este prazo, os mesmos serão devolvidos ao CONDOMÍNIO."),
-        new Paragraph({ text: "" }),
         createParagraph("3.14. Dos Serviços Jurídicos - Caso o CONDOMÍNIO necessite de serviços jurídicos, a ADMINISTRADORA apresentará relação de escritórios de advogados especialistas em diversas áreas, ficando a cargo do CONDOMÍNIO a escolha do escritório que lhe prestará os serviços. Os honorários do advogado e os termos da contratação serão tratados entre o representante legal do escritório escolhido e o representante legal do CONDOMÍNIO, que lhes outorgará procuração específica para a eventual medida extrajudicial ou judicial. A ADMINISTRADORA não possui qualquer responsabilidade sobre os serviços prestados pelo escritório de advogados indicado."),
         new Paragraph({ text: "" }),
 
         createBoxedText("CLÁUSULA 4 – DAS DISPOSIÇÕES GERAIS."),
         new Paragraph({ text: "" }),
 
-        new Paragraph({ text: "4.1. A título de reembolso, serão repassados ao CONDOMINIO todos os custos e despesas relacionadas com correio, cópias, impressões, envelopes, material de escritório, tarifas/taxas bancárias, e outras despesas decorrentes de atos praticados pela ADMINISTRADORA em benefício ao CONDOMINIO. Somado a isso, os demais itens previstos no Referencial de Serviços Especiais descritos abaixo, quando efetivados, serão pagos à ADMINISTRADORA, conforme segue:", alignment: AlignmentType.JUSTIFIED }),
+        createParagraph("4.1. A título de reembolso, serão repassados ao CONDOMINIO todos os custos e despesas relacionadas com correio, cópias, impressões, envelopes, material de escritório, tarifas/taxas bancárias, e outras despesas decorrentes de atos praticados pela ADMINISTRADORA em benefício ao CONDOMINIO. Somado a isso, os demais itens previstos no Referencial de Serviços Especiais descritos abaixo, quando efetivados, serão pagos à ADMINISTRADORA, conforme segue:"),
         new Paragraph({ text: "", pageBreakBefore: true }),
 
         new Table({
@@ -357,22 +349,17 @@ export const generateWord = async (formData: any, table41Data: any[], table41Hea
             ...table41Data.map((row, index) => 
               new TableRow({ 
                 children: [
-                  new TableCell({ children: [new Paragraph(row.servico)], margins: { top: 100, bottom: 100, left: 100, right: 100 }, shading: { fill: index % 2 === 0 ? "f4f9fd" : "ffffff" } }), 
-                  new TableCell({ children: [new Paragraph(row.tipo === 'valor' ? row.valor : (row.tipo === 'isento' ? 'ISENTO' : row.valor))], margins: { top: 100, bottom: 100, left: 100, right: 100 }, shading: { fill: index % 2 === 0 ? "f4f9fd" : "ffffff" } })
+                  new TableCell({ children: [new Paragraph({ text: row.servico, spacing: { before: 50, after: 50 } })], margins: { top: 100, bottom: 100, left: 100, right: 100 }, shading: { fill: index % 2 === 0 ? "f4f9fd" : "ffffff" } }), 
+                  new TableCell({ children: [new Paragraph({ text: row.tipo === 'valor' ? row.valor : (row.tipo === 'isento' ? 'ISENTO' : row.valor), spacing: { before: 50, after: 50 } })], margins: { top: 100, bottom: 100, left: 100, right: 100 }, shading: { fill: index % 2 === 0 ? "f4f9fd" : "ffffff" } })
                 ] 
               })
             )
           ]
         }),
-        new Paragraph({ text: "" }),
-        new Paragraph({ text: "" }),
+        new Paragraph({ text: "", spacing: { after: 200 } }),
 
         createParagraph("4.1.1. Serão repassadas mediante reembolso as eventuais despesas de aluguéis de máquinas, contratação de operadores, telões etc., que demandarem despesas, e que vierem a serem solicitadas pelo CONDOMÍNIO, de modo que, não faça parte do escopo ou quadro de materiais que a ADMINISTRADORA possua para a prestação de serviços."),
-        new Paragraph({ text: "" }),
-        new Paragraph({ text: "" }),
         createParagraph("4.1.2. Os serviços especiais previstos na Cláusula 4.1, quando efetivamente prestados, terão seus valores reajustados no mês de janeiro de cada ano, com base no índice econômico indicado no quadro resumo deste contrato, aplicando-se a variação acumulada do referido índice no período."),
-        new Paragraph({ text: "" }),
-        new Paragraph({ text: "" }),
         ...(formData.tipoLgpd === 'Completa' ? [
           createParagraph('4.2. - Considerando o tratamento de dados pessoais realizado pela ADMINISTRADORA, seus funcionários, representantes, contratados, subcontratados ou outros, em nome e a mando do CONDOMINIO, a ADMINISTRADORA deve garantir que qualquer terceiro envolvido no tratamento em seu nome, em razão disto, cumprirá integralmente aquilo definido pela Lei Geral de Proteção de Dados (“LGPD” - Lei nº 13.709/18). A ADMINISTRADORA deverá observar as diretrizes da legislação aplicável a matérias relacionadas à proteção de dados pessoais e privacidade, principalmente no que se refere ao tratamento de informações pessoais relacionados ao objeto da contratação do presente, inclusive nas seguintes condições:'),
           new Paragraph({ text: "" }),
